@@ -1,113 +1,149 @@
-const User =require("../Model/UserModel");
+const User = require("../Model/UserModel");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-const getAllUsers = async (req,res,next)=>{
-    let Users;
-    //get all 
-    try{
-        users =await User.find();
-    }catch (err){
-        console.log(err);
-    }
-
-//user not found
-if(!users){
-    return res.status(404).json({message:"User not found"});
-}
-
-//display all users
-return res.status(200).json({users});
+// Get all users (keep similar)
+const getAllUsers = async (req, res, next) => {
+  let users;
+  try {
+    users = await User.find();
+  } catch (err) {
+    console.log(err);
+  }
+  if (!users) {
+    return res.status(404).json({ message: "Users not found" });
+  }
+  return res.status(200).json({ users });
 };
 
-//data Insert
-const addUsers=async(req,res,next)=>{
-    const{name,gmail,age,address}=req.body;
-
-    let users;//variable
-
-    try{
-        users = new User({name,gmail,age,address});
-        await users.save();
-    }catch (err){
-        console.log(err);
-
+// Register (modified addUsers: hash password, default role)
+const register = async (req, res, next) => {
+  const { name, email, age, address, password } = req.body;
+  let user;
+  try {
+    // Check if email exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
-
-    //notisert users
-    if(!users){
-        return res.status(400).jsond({message:"unable to add users"});
-
-    }
-    return res.status(200).json({users})
-
-
-}
-//get by id
-
-const getbyId=async (req,res,next) => {
-    const id = req.params.id; //used to route
-    let user;
-    try{
-        user =await User.findById(id);
-    }catch (err){
-        console.log(err);
-    }
-
- //not available users
-    if(!user){
-        return res.status(404).json({message:"User not avable"});
-
-    }
-    return res.status(200).json({user})    
-
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user = new User({ name, email, age, address, password: hashedPassword, role: 'pending' });
+    await user.save();
+  } catch (err) {
+    console.log(err);
+  }
+  if (!user) {
+    return res.status(400).json({ message: "Unable to register user" });
+  }
+  return res.status(201).json({ user });
 };
-//update data
-const updateUser=async  (req,res,next) =>{
-      const id = req.params.id; //used to route
-      const{name,gmail,age,address}=req.body;
 
-      let users;//variablle
-
-      try{
-        users = await User.findByIdAndUpdate(id,{name:name,gmail:gmail,age:age,address:address});
-        users= await users.save();
-      }catch (err){
-         console.log(err);
-
-      }
-
-       if(!users){
-        return res.status(404).json({message:"Unabel to update data"});
-
+// Login
+const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  let user;
+  try {
+    user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-    return res.status(200).json({users})    
-
-
-
-
-
-
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }  // Token expires in 1 hour
+    );
+    return res.status(200).json({ token, role: user.role,user: { name: user.name } });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Server error" });
+  }
 };
-//Delete User details
-const deleteuser =async  (req,res,next) =>{
-    const id=req.params.id;
 
-    let user;//variable
-    try{
-        user=await User.findByIdAndDelete(id);
-    }catch(err){
-         console.log(err);
+// Assign Role (Admin only)
+const assignRole = async (req, res, next) => {
+  const { userId, newRole } = req.body;
+  // Check if caller is admin (we'll add middleware later)
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Access denied" });
+  }
+  let user;
+  try {
+    user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-       if(!user){
-        return res.status(404).json({message:"Unabel to Delete data"});
-
+    if (user.role === 'admin') {
+      return res.status(400).json({ message: "Cannot change admin role" });
     }
-    return res.status(200).json({user})    
+    user.role = newRole;
+    await user.save();
+  } catch (err) {
+    console.log(err);
+  }
+  if (!user) {
+    return res.status(400).json({ message: "Unable to assign role" });
+  }
+  return res.status(200).json({ user });
+};
 
+// Get by ID (keep similar, fixed typos)
+const getById = async (req, res, next) => {
+  const id = req.params.id;
+  let user;
+  try {
+    user = await User.findById(id);
+  } catch (err) {
+    console.log(err);
+  }
+  if (!user) {
+    return res.status(404).json({ message: "User not available" });
+  }
+  return res.status(200).json({ user });
+};
 
-}
+// Update User (keep similar, fixed typos)
+const updateUser = async (req, res, next) => {
+  const id = req.params.id;
+  const { name, email, age, address } = req.body;
+  let user;
+  try {
+    user = await User.findByIdAndUpdate(id, { name, email, age, address });
+    user = await user.save();
+  } catch (err) {
+    console.log(err);
+  }
+  if (!user) {
+    return res.status(404).json({ message: "Unable to update data" });
+  }
+  return res.status(200).json({ user });
+};
 
-exports.getAllUsers=getAllUsers;
-exports.addUsers =addUsers;
-exports.getbyId=getbyId;
-exports.updateUser=updateUser;
-exports.deleteuser=deleteuser;
+// Delete User (keep similar, fixed typos)
+const deleteUser = async (req, res, next) => {
+  const id = req.params.id;
+  let user;
+  try {
+    user = await User.findByIdAndDelete(id);
+  } catch (err) {
+    console.log(err);
+  }
+  if (!user) {
+    return res.status(404).json({ message: "Unable to delete data" });
+  }
+  return res.status(200).json({ user });
+};
+
+exports.getAllUsers = getAllUsers;
+exports.register = register;
+exports.login = login;
+exports.assignRole = assignRole;
+exports.getById = getById;
+exports.updateUser = updateUser;
+exports.deleteUser = deleteUser;
