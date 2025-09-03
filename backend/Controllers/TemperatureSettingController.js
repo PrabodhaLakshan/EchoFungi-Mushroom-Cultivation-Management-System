@@ -37,7 +37,7 @@ const autoControlRelayIfNeeded = async () => {
     }
 
     if (currentTemp >= settings.maxTemp) {
-      const token = "5zV5DqmmwIKanPx7JJeg-fqVeOG8oB5n";
+      const token = "D3EePqet-8MAOHDTrRpSPPg_ADFHOYag";
 
       if (!token) {
         console.warn('BLYNK_TOKEN env var not set; cannot control relay');

@@ -3,6 +3,7 @@ import './Header.css';  // import the CSS file
 import {Link} from "react-router-dom";
 
 const Header = () => {
+  const username = sessionStorage.getItem("username");
   return (
     <header className="header">
       <div className="header-container">
@@ -11,21 +12,13 @@ const Header = () => {
           <span>🍄 Mushroom Plantation</span>
         </div>
 
-        {/* Navigation */}
-        <nav className="nav">
-        <Link to="/history"> <h1>history</h1> </Link> 
-        <Link to="/Environment"> <h1>Environment management</h1> </Link> 
-        <Link to="/test"> <h1>batch management</h1></Link> 
-        <Link to="/batchadd"> <h1>expense</h1></Link> 
-        <Link to="/bagiteam"> <h1>bagitem</h1></Link>
-        <Link to="/relay"> <h1>relay</h1></Link> 
-        <Link to="/expenseadd"> <h1>exadd</h1></Link> 
-        </nav>
+        <h2>Environment Management</h2>
 
         {/* Profile Icon */}
-        <div className="profile-icon">
-          U
-        </div>
+       
+          
+     
+        <h1>Welcome {username}</h1>
       </div>
     </header>
   );
