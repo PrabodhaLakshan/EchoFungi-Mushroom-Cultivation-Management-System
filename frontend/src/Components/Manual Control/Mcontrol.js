@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';  
 
@@ -51,9 +50,6 @@ function Mcontrol() {
     });
   };
 
-
-
-
   //  Updated with validations 
   const handleAddSchedule = async () => {
     if (!selectedBatch) {
@@ -83,12 +79,6 @@ function Mcontrol() {
       alert("Spray duration cannot exceed 2 hours.");
       return;
     }
-
-
-
-
-
-
 
     const newSchedule = {
       batchid: selectedBatch,
@@ -145,11 +135,14 @@ function Mcontrol() {
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
+            {/* Batch Select - Fixed Styles */}
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Batch</label>
               <select
                 id="batch"
                 value={selectedBatch}
                 onChange={(e) => setSelectedBatch(e.target.value)}
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
               >
                 <option value="">-- Select a Batch --</option>
                 {Array.isArray(batches) && batches.map(batch => (
