@@ -8,6 +8,7 @@ import Mcontrol from '../Manual Control/Mcontrol';
 import EnvironmentH from '../EnvironmentHistory/EnvironmentH';
 
 function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
+    const [searchQuery, setSearchQuery] = useState("");
   const [activeSection, setActiveSection] = useState('monitoring');
      const [temperatureLevel, setTemperatureLevel] = useState(30); // max temperature
       const [autoSpray, setAutoSpray] = useState(false);
@@ -61,9 +62,12 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
   const [loading, setLoading] = useState(false);
 
   // Function to fetch current relay status
+   const token = localStorage.getItem("token");
   const getRelayStatus = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/iot/status');
+      const response = await axios.get('http://localhost:5000/iot/status',{
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRelayStatus(response.data.message);
     } catch (error) {
       console.error('Error fetching relay status:', error);
@@ -85,7 +89,9 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
   const controlRelay = async (status) => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/iot/${status}`);
+      const response = await axios.get(`http://localhost:5000/iot/${status}`,{
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRelayStatus(response.data.message);  // Update the relay status
     } catch (error) {
       console.error('Error controlling relay:', error);
@@ -102,7 +108,9 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
       useEffect(() => {
           const loadSettings = async () => {
               try {
-                  const res = await axios.get('http://localhost:5000/api/temperatureSetting');
+                  const res = await axios.get('http://localhost:5000/api/temperatureSetting',{
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                   if (res.data && res.data.data) {
                       setTemperatureLevel(res.data.data.maxTemp);
                       setAutoSpray(res.data.data.autoMode);
@@ -118,7 +126,9 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
       useEffect(() => {
           const fetchLiveData = async () => {
               try {
-                  const res = await axios.get('http://localhost:5000/iot/stats');
+                  const res = await axios.get('http://localhost:5000/iot/stats',{
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                   if (res.data && res.data.data) {
                       setCurrentTemp(res.data.data.temperature);
                   }
@@ -158,13 +168,17 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
           
       }, [currentTemp, temperatureLevel, autoSpray]);
 
-
+  const items = ["Humidity Sensor", "Temperature Sensor", "Spray Schedule", "IoT Status","monitoring","automatic","manual","history"];
+        // Filter based on search query
+  const filteredItems = items.filter((item) =>
+    item.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-gray-50">
-      <Header />
+        <Header onSearch={setSearchQuery} />
       
       <div className="flex">
         {/* Left Sidebar */}

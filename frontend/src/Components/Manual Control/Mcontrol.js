@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../Header/Header'
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';  
 
 function Mcontrol() {
     const [schedules, setSchedules] = useState([]); // will be filled from DB
@@ -12,6 +12,7 @@ function Mcontrol() {
     });
       const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState("");
+    const navigate = useNavigate();
 
 // Display variables will be calculated inside the render function for real-time updates
 
@@ -230,7 +231,8 @@ const formatTime = (time) => {
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium">
+          <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
+            onClick={() => navigate(`/update/${schedule._id}`)}>
             Update
           </button>
           <button
