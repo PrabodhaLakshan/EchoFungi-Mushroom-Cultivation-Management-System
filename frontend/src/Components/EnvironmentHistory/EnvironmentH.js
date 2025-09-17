@@ -7,7 +7,9 @@ function EnvironmentH() {
 
  const fetchHistory = async () => {
   try {
-    const response = await axios.get("http://localhost:5000/iot/history");
+    const response = await axios.get("http://localhost:5000/iot/history",{
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
     console.log("API raw response:", response.data);
 
     // ✅ Extract the real array

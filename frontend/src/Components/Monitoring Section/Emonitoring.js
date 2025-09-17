@@ -19,7 +19,9 @@ useEffect(() => {
         console.log('🔄 Fetching IoT data from secure backend...');
         
         // Fetch data from secure backend endpoint (which calls Blynk internally)
-        const response = await fetch('http://localhost:5000/iot/getLatest');
+        const response = await fetch('http://localhost:5000/iot/getLatest',{
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         const result = await response.json();
         
         if (response.ok && result.temperature !== undefined && result.humidity !== undefined) {
@@ -91,7 +93,9 @@ useEffect(() => {
       setIotLoading(true);
       console.log("🔄 Fetching IoT data from /iot/stats...");
       
-      const response = await axios.get("http://localhost:5000/iot/stats");
+      const response = await axios.get("http://localhost:5000/iot/stats",{
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       console.log("📡 IoT API Response:", response.data);
       
       if (response.data.data) {
@@ -156,7 +160,9 @@ const formatHumidity = (value) => {
 const handleManualRefresh = async () => {
   try {
     setIotLoading(true);
-    const response = await axios.get("http://localhost:5000/iot/stats");
+    const response = await axios.get("http://localhost:5000/iot/stats",{
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
     if (response.data.data) {
       const data = response.data.data;
       setIotData({

@@ -13,6 +13,7 @@ import Emonitoring from './Components/Monitoring Section/Emonitoring';
 import Acontrol from './Components/Automatic Control/Acontrol';
 import Mcontrol from './Components/Manual Control/Mcontrol';
 import EnvironmentHistory from './Components/EnvironmentHistory/EnvironmentH';
+import UpdateSchedule from './Components/Manual Control/UpdateSchedule';
 import { useNavigate } from 'react-router-dom';
 // import Waiting from './Components/waiting/waiting';
 
@@ -33,6 +34,8 @@ function App() {
              <Route path="/automatic-control" element={<Acontrol />} />
              <Route path="/manual-control" element={<Mcontrol />} />
               <Route path="/relay" element={<RelaySwitch />} />
+              <Route path="/update/:id" element={<UpdateSchedule />} />
+
 
 
 
