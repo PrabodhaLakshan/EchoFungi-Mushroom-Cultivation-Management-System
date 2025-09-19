@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { Search, UserCircle2 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';  
 
 const Header = ({ onSearch }) => {
-  const username = sessionStorage.getItem("username") || "Manager";
-  const [searchQuery, setSearchQuery] = useState("");
+const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
+const username = storedUser.name || "Manager";
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
   // Handle typing in search bar
   const handleSearch = (e) => {
     const value = e.target.value;
@@ -39,7 +42,9 @@ const Header = ({ onSearch }) => {
         <div className="flex items-center gap-2">
           <UserCircle2 className="h-8 w-8 text-green-800" />
           <h1 className="text-lg font-semibold text-green-900">
-            Welcome {username}
+            Welcome   <button onClick={() => navigate("/profile")}>{username}</button>
+
+        
           </h1>
         </div>
       </div>
