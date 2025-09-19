@@ -14,6 +14,10 @@ const Login = () => {
     try {
       console.log('Sending login request:', { email, password }); 
       const res = await axios.post('http://localhost:5000/users/login', { email, password });
+      // After successful login
+      const userData = res.data.user; // assuming this has all details: name, email, age, role, etc.
+      sessionStorage.setItem('user', JSON.stringify(userData));
+
 
       if (res.data && res.data.user && res.data.user.name) {          //add seassion
         sessionStorage.setItem('username', res.data.user.name);
