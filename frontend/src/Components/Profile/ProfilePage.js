@@ -114,7 +114,7 @@ function ProfilePage() {
         <div className="w-64 bg-[#1B5E20] text-white flex flex-col p-6">
           <h2 className="text-2xl font-bold mb-10">🍄 Plantation</h2>
           <button
-            onClick={() => navigate("/Environment_Manager-dashboard")}
+            onClick={() => navigate(`/${form.role}-dashboard`)}
             className="mb-4 px-4 py-2 bg-[#4CAF50] hover:bg-[#A5D6A7] hover:text-[#1B5E20] rounded-lg font-semibold transition"
           >
             Dashboard
