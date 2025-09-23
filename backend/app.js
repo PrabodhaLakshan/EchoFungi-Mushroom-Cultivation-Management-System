@@ -4,11 +4,16 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
+
 // Routers
 const userRouter = require('./Routes/UserRoutes');
 const sprayrouter = require("./Routes/sprayRoutes");
 const iotRouter = require("./Routes/IoTRoutes");
 const temperatureSettingRouter = require("./Routes/TemperatureSettingRoutes");
+const router = require("./Route/ExpenseRouter");
+const exprouter = require("./Route/EmployeeRouter");
+const sryrouter = require("./Route/SalaryRouter");
+const ProfitRouter=require("./Route/ProfitRouter");
 
 dotenv.config();
 
@@ -55,7 +60,9 @@ app.use("/iot", authMiddleware, iotRouter);
 
 // Optional: protect temp settings too
 app.use("/api/temperatureSetting", authMiddleware, temperatureSettingRouter);
-
+app.use("/expenses", router);
+app.use("/employees", exprouter);
+app.use("/salaries", sryrouter);
 // ===============================
 // MongoDB connection
 // ===============================
