@@ -1,7 +1,7 @@
 import React from 'react'
 import MainIntNav from "../MainIntNav/MainIntNav";
 
-function Alerts() {
+function Reports() {
   return (
     <div>
       <MainIntNav/>
@@ -9,4 +9,4 @@ function Alerts() {
   )
 }
 
-export default Alerts
+export default Reports

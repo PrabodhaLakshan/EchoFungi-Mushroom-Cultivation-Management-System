@@ -18,12 +18,12 @@ import ProfilePage from './Components/Profile/ProfilePage';
 
 
 
-//
+//finance
 import Expenses from "./Components/Expenses/Expen";
 import FDashboard from "./Components/fDashboard/fDashboard";
 import Payroll from "./Components/Payroll/payroll";
 import Profit from "./Components/Profit/profit";
-import Alerts from "./Components/Alerts/Alerts";
+import FAlerts from "./Components/Alerts/Alerts";
 
 import Exdetails from "./Components/Exdetails/Exdetails";
 import Exreports from "./Components/Exreports/Exreports";
@@ -37,6 +37,30 @@ import UpdateSalary from "./Components/UpdateSalary/UpdateSalary";
 import SalarySlip from "./Components/SalarySlip/SalarySlip";
 import { useNavigate } from 'react-router-dom';
 // import Waiting from './Components/waiting/waiting';
+
+//inventory
+//import Home from "./Components/Home/Home";
+import InventoryDashboard from "./Components/InventoryDashboard/InventoryDashboard"; 
+//import AddItem from "./Components/AddItem/AddItem";
+import AddInventory from "./Components/AddInventory/AddInventory";
+import InventoryItems from "./Components/Items/Items";
+import Reports from "./Components/Reports/Reports";
+import Alerts from "./Components/Alerts/Alerts";
+import Logouts from "./Components/Logouts/Logouts";
+import UpdateInventory from "./Components/UpdateInventory/UpdateInventory";
+import AddSupplier from "./Components/AddSupplier/AddSupplier"
+
+import AddPurchase from "./Components/AddPurchase/AddPurchase";
+import IntReport from "./Components/IntReport/IntReport";
+import Supplies from "./Components/Supplies/Supplies";
+import UpdateSuppler from "./Components/UpdateSuppler/UpdateSuppler";
+import Purchases from "./Components/Purchases/Purchases";
+import UpdatePurchase from "./Components/UpdatePurchase/UpdatePurchase";
+import SupplierReport from "./Components/SupplierReport/SupplierReport";
+import PurchaseReport from "./Components/PurchaseReport/PurchaseReport";
+
+
+
 
 function App() {
    const Navigate = useNavigate();
@@ -73,7 +97,22 @@ function App() {
           <Route path="/Paydetails/:id" element={<UpdateSalary />}/>
           <Route path="/salarySlip/:id" element={<SalarySlip/>}/>
               
-
+ <Route path="/Inventory_Manager-dashboard" element={<InventoryDashboard />} />
+          <Route path="/additem" element={<AddInventory />} />
+          <Route path="/itemdetails"  element={<InventoryItems />} />
+          <Route path="/itemdetails/:id"  element={<UpdateInventory />} />
+          <Route path="/addsupplier" element={<AddSupplier />} />
+          <Route path="/supplierdetails" element={<Supplies />} />
+           <Route path="/supplierdetails/:id" element={<UpdateSuppler />} />
+          <Route path="/addpurchase" element={<AddPurchase />} />
+          <Route path="/purchasedetails" element={<Purchases />} />
+        <Route path="/purchasedetails/:id" element={<UpdatePurchase />} />
+          <Route path="/reports"  element={<Reports />} />
+           <Route path="/intreports"  element={<IntReport />} />
+           <Route path="/supreports"  element={<SupplierReport />} />
+            <Route path="/purchreports"  element={<PurchaseReport />} />
+          <Route path="/alerts"  element={<Alerts />} />
+           <Route path="/logout"  element={<Logouts />} />
 
 
 

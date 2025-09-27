@@ -3,7 +3,7 @@ const router=express.Router();
 
 const Purchase=require("../Model/PurchaseModel")
 
-const PurchaseController=require("../Controlers/PurchaseController")
+const PurchaseController=require("../Controllers/PurchaseController")
 
 router.get("/",PurchaseController.getAllPurchase);
 router.post("/",PurchaseController.addPurchase);

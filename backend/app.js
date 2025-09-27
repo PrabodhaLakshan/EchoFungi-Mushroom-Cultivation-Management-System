@@ -14,6 +14,11 @@ const router = require("./Routes/ExpenseRouter");
 const exprouter = require("./Routes/EmployeeRouter");
 const sryrouter = require("./Routes/SalaryRouter");
 const ProfitRouter=require("./Routes/ProfitRouter");
+const inventoryrouter=require("./Routes/InventoryRoute");
+const supplierRouter=require("./Routes/SupplierRoute");
+const PurchaseRouter=require("./Routes/PurchaseRoute");
+
+
 
 dotenv.config();
 
@@ -63,6 +68,13 @@ app.use("/api/temperatureSetting", authMiddleware, temperatureSettingRouter);
 app.use("/expenses", router);
 app.use("/employees", exprouter);
 app.use("/salaries", sryrouter);
+app.use("/items",inventoryrouter);
+app.use("/suppliers",supplierRouter);
+app.use("/purchases",PurchaseRouter);
+
+
+
+
 // ===============================
 // MongoDB connection
 // ===============================
