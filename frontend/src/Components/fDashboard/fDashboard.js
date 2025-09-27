@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Nav from "../fNav/fNav";
 import { Pie, Line } from "react-chartjs-2";
+import Header from '../Header/Header';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -97,6 +98,7 @@ function FinanceStats() {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
+    
       {/* Sidebar/Nav */}
       <div className="w-64">
         <Nav />

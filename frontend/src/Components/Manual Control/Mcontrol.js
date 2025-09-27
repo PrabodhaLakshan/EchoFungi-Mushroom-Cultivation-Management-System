@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';  
+import { useNavigate } from 'react-router-dom';
 
 function Mcontrol() {
   const [schedules, setSchedules] = useState([]); // will be filled from DB
@@ -50,7 +50,7 @@ function Mcontrol() {
     });
   };
 
-  //  Updated with validations 
+  // Updated with validations 
   const handleAddSchedule = async () => {
     if (!selectedBatch) {
       alert("Please select a batch!");
@@ -123,6 +123,50 @@ function Mcontrol() {
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
+
+  // Control relay (turn water pump on or off)
+  const controlRelay = async (isOn) => {
+    if (isOn) {
+      try {
+        await axios.get(`http://localhost:5000/iot/sprayOn`);
+        await axios.get(`http://localhost:5000/iot/buzzerOn`);
+        alert("Water pump is ON!");  // Notify the user
+      } catch (error) {
+        console.error('Error controlling relay:', error);
+      }
+    } else {
+      try {
+        await axios.get(`http://localhost:5000/iot/sprayOff`);
+        await axios.get(`http://localhost:5000/iot/buzzerOff`);
+        alert("Water pump is OFF!");  // Notify the user
+      } catch (error) {
+        console.error('Error controlling relay:', error);
+      }
+    }
+  };
+
+  // Check schedules against current time
+  useEffect(() => {
+    const checkSchedules = () => {
+      const currentTime = new Date();
+      const currentDay = currentTime.toLocaleString('en-us', { weekday: 'long' }).toLowerCase();
+      const currentTimeStr = currentTime.toISOString().split('T')[1].slice(0, 5);  // HH:MM format
+
+      schedules.forEach(schedule => {
+        if (schedule.day === currentDay || schedule.day === 'Every Day') {
+          if (schedule.stime === currentTimeStr) {
+            controlRelay(true);  // Turn on the water pump
+          }
+          if (schedule.endtime === currentTimeStr) {
+            controlRelay(false);  // Turn off the water pump
+          }
+        }
+      });
+    };
+
+    const intervalId = setInterval(checkSchedules, 60000);  // Check every minute
+    return () => clearInterval(intervalId);  // Cleanup on unmount
+  }, [schedules]);
 
   return (
     <div>

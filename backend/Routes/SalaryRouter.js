@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const salary = require("../Model/SalaryModel");
-const salaryController = require("../Controlers/SalaryController");
+const salaryController = require("../Controllers/SalaryController");
 
 router.get("/", salaryController.getAllSalaries);
 router.post("/", salaryController.addSalary);

@@ -6,18 +6,26 @@ const BLYNK_TOKEN = "D3EePqet-8MAOHDTrRpSPPg_ADFHOYag";
 // Fetch real-time Blynk data
 const fetchBlynkData = async () => {
   try {
+    // Fetch temperature and humidity data from Blynk Cloud
     const tempRes = await axios.get(`https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&V0`);
     const humRes = await axios.get(`https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&V3`);
     
     const t = parseFloat(tempRes.data);
     const h = parseFloat(humRes.data);
+
+    // If data is invalid, mark as offline
+    if (!Number.isFinite(t) || !Number.isFinite(h)) {
+      return { temperature: null, humidity: null, offline: true };
+    }
+
     return {
-      temperature: Number.isFinite(t) ? t : null,
-      humidity: Number.isFinite(h) ? h : null
+      temperature: t,
+      humidity: h,
+      offline: false
     };
   } catch (err) {
     console.error('Error fetching Blynk data:', err);
-    return { temperature: null, humidity: null };
+    return { temperature: null, humidity: null, offline: true }; // If request fails, mark as offline
   }
 };
 
@@ -33,18 +41,17 @@ const controlRelay = async (status) => {
   }
 };
 
-// buzzer control (active-low: 1 = ON, 0 = OFF)
+// Buzzer control (active-low: 1 = ON, 0 = OFF)
 const controlbuzzer = async (status) => {
   try {
     const value = status ? 1 : 0; // active-low mapping
     await axios.get(`https://blynk.cloud/external/api/update?token=${BLYNK_TOKEN}&V2=${value}`);
     return { message: status ? 'buzzer ON' : 'buzzer OFF', value };
   } catch (err) {
-    console.error('buzzer control failed:', err);
-    return { error: 'buzzer control failed' };
+    console.error('Buzzer control failed:', err);
+    return { error: 'Buzzer control failed' };
   }
 };
-
 
 // Relay status read (from Blynk)
 const getRelayStatus = async () => {
@@ -59,12 +66,11 @@ const getRelayStatus = async () => {
   }
 };
 
-// ✅ New: Auto relay control based on maxTemp in DB
+// Auto relay control based on maxTemp in DB
 const autoRelayControl = async () => {
   try {
-    // Get today's record (assume maxTemp stored daily)
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     const todayRecord = await maxtempm.findOne({ date: today });
 
     if (!todayRecord || todayRecord.maxTemp == null) return null;
@@ -87,7 +93,7 @@ const autoRelayControl = async () => {
   }
 };
 
-// Save daily min/max
+// Save daily min/max stats to database
 const saveDailyStats = async (readings) => {
   if (!readings || !readings.length) return null;
 
@@ -100,7 +106,7 @@ const saveDailyStats = async (readings) => {
   const maxHumidity = Math.max(...hums);
 
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
 
   const record = await IotData.findOneAndUpdate(
     { date: today },
@@ -112,15 +118,9 @@ const saveDailyStats = async (readings) => {
 
 // Get 5-day history
 const getHistory = async () => {
-  const fiveDaysAgo = new Date(Date.now() - 5*24*60*60*1000);
+  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
   const data = await IotData.find({ date: { $gte: fiveDaysAgo } }).sort({ date: 1 });
   return data;
-};
-
-// Get latest with timestamp
-const getLatest = async () => {
-  const live = await fetchBlynkData();
-  return { ...live, timestamp: new Date().toISOString() };
 };
 
 // Record a single reading and update today's min/max
@@ -129,7 +129,7 @@ const recordReadingAndUpdateDailyStats = async (reading) => {
   const { temperature, humidity, timestamp } = reading;
 
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
 
   const existing = await IotData.findOne({ date: today });
 
@@ -152,12 +152,22 @@ const recordReadingAndUpdateDailyStats = async (reading) => {
   return { updated, timestamp: timestamp || new Date().toISOString() };
 };
 
+// Get the latest reading with timestamp
+const getLatest = async () => {
+  const live = await fetchBlynkData();
+
+  return { 
+    ...live, 
+    timestamp: new Date().toISOString()
+  };
+};
+
 // Combined stats payload for frontend
 const getStats = async () => {
   const latest = await getLatest();
 
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
   const todayRecord = await IotData.findOne({ date: today });
 
   return {
@@ -167,19 +177,32 @@ const getStats = async () => {
     maxTemp: todayRecord ? todayRecord.maxTemp : null,
     minHumidity: todayRecord ? todayRecord.minHumidity : null,
     maxHumidity: todayRecord ? todayRecord.maxHumidity : null,
-    timestamp: latest.timestamp
+    timestamp: latest.timestamp,
+    offline: latest.offline  // Ensure this is being passed to frontend
   };
+};
+
+// Get device status
+const getDeviceStatus = async () => {
+  try {
+    const liveData = await fetchBlynkData();
+    return { offline: liveData.offline, message: liveData.offline ? 'Device is offline' : 'Device is online' };
+  } catch (err) {
+    console.error('Error fetching device status:', err);
+    return { offline: true, message: 'Device is offline' };
+  }
 };
 
 module.exports = {
   fetchBlynkData,
   controlRelay,
-  autoRelayControl,      // ✅ new function added
+  autoRelayControl,      
   saveDailyStats,
   getHistory,
   getLatest,
   recordReadingAndUpdateDailyStats,
   getStats,
   getRelayStatus,
-   controlbuzzer
+  controlbuzzer,
+  getDeviceStatus
 };

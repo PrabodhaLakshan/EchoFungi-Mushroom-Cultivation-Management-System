@@ -10,10 +10,10 @@ const userRouter = require('./Routes/UserRoutes');
 const sprayrouter = require("./Routes/sprayRoutes");
 const iotRouter = require("./Routes/IoTRoutes");
 const temperatureSettingRouter = require("./Routes/TemperatureSettingRoutes");
-const router = require("./Route/ExpenseRouter");
-const exprouter = require("./Route/EmployeeRouter");
-const sryrouter = require("./Route/SalaryRouter");
-const ProfitRouter=require("./Route/ProfitRouter");
+const router = require("./Routes/ExpenseRouter");
+const exprouter = require("./Routes/EmployeeRouter");
+const sryrouter = require("./Routes/SalaryRouter");
+const ProfitRouter=require("./Routes/ProfitRouter");
 
 dotenv.config();
 

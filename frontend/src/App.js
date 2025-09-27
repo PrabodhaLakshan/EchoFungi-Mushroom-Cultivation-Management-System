@@ -20,7 +20,7 @@ import ProfilePage from './Components/Profile/ProfilePage';
 
 //
 import Expenses from "./Components/Expenses/Expen";
-import fDashboard from "./Components/fDashboard/fDashboard";
+import FDashboard from "./Components/fDashboard/fDashboard";
 import Payroll from "./Components/Payroll/payroll";
 import Profit from "./Components/Profit/profit";
 import Alerts from "./Components/Alerts/Alerts";
@@ -58,7 +58,7 @@ function App() {
               <Route path="/update/:id" element={<UpdateSchedule />} />
               <Route path="/profile" element={<ProfilePage />} />
 	      
-		 <Route path="/Finance_Manager-dashboard" element={<fDashboard />}/>
+		 <Route path="/finance_manager-dashboard" element={<FDashboard />}/>
 	       <Route path="/payroll" element={<Payroll />}/>
           <Route path="/profit" element={<Profit/>}/>
           <Route path="/alerts" element={<Alerts/>}/>

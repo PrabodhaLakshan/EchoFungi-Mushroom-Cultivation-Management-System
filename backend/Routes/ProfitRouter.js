@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { generateProfitLoss } = require("../Controlers/ProfitController");
+const { generateProfitLoss } = require("../Controllers/ProfitController");
 
 router.post("/generate", generateProfitLoss);
 

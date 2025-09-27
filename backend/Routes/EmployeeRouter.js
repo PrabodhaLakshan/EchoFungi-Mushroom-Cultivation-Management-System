@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const employeeController = require("../Controlers/EmployeeController");
+const employeeController = require("../Controllers/EmployeeController");
 
 // Get all employees
 router.get("/", employeeController.getAllEmployee);

@@ -24,19 +24,7 @@ const username = storedUser.name || "Manager";
           🍄 Mushroom Plantation
         </div>
 
-        {/* 🔍 Search bar center */}
-        <div className="flex-1 px-6">
-          <div className="relative w-full max-w-md mx-auto">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-full rounded-2xl border border-green-300 bg-white/70 pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-green-600" />
-          </div>
-        </div>
+        
 
         {/* 👤 Profile & username right */}
         <div className="flex items-center gap-2">
