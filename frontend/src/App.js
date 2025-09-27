@@ -59,7 +59,14 @@ import UpdatePurchase from "./Components/UpdatePurchase/UpdatePurchase";
 import SupplierReport from "./Components/SupplierReport/SupplierReport";
 import PurchaseReport from "./Components/PurchaseReport/PurchaseReport";
 
+//Batch
 
+import BatchHome from "./Components/BatchHome/Home";
+import AddBatch from "./Components/AddBatch/AddBatch"
+import BatchDetails from "./Components/Batch Details/BatchDetails";
+import UpdateBatch from "./Components/UpdateBatch/UpdateBatch";
+import Addbag from "./Components/Add Bag/BagManager";
+import SendPdf from "./Components/SendPdf/SendPdf";
 
 
 function App() {
@@ -113,6 +120,23 @@ function App() {
             <Route path="/purchreports"  element={<PurchaseReport />} />
           <Route path="/alerts"  element={<Alerts />} />
            <Route path="/logout"  element={<Logouts />} />
+
+
+
+
+
+          <Route path="/Batch_Manager-dashboard" element={<BatchHome />}/>
+         
+          <Route path="/mainhome" element={<BatchHome />}/>
+          <Route path="/addbatch" element={<AddBatch />}/>
+          <Route path="/batchdetails" element={<BatchDetails />}/>
+         
+          <Route path="/updatebatch/:id" element={<UpdateBatch />}/>
+          <Route path="/addbag" element={<Addbag />}/>
+
+
+
+
 
 
 

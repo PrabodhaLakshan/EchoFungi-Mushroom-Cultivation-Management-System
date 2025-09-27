@@ -18,6 +18,13 @@ const inventoryrouter=require("./Routes/InventoryRoute");
 const supplierRouter=require("./Routes/SupplierRoute");
 const PurchaseRouter=require("./Routes/PurchaseRoute");
 
+const batchrouter=require("./Routes/BatchRoutes");
+const BagRouter=require("./Routes/bagRoutes");
+
+
+
+
+
 
 
 dotenv.config();
@@ -71,7 +78,8 @@ app.use("/salaries", sryrouter);
 app.use("/items",inventoryrouter);
 app.use("/suppliers",supplierRouter);
 app.use("/purchases",PurchaseRouter);
-
+app.use("/bag",BagRouter);
+app.use("/batches",batchrouter);
 
 
 
