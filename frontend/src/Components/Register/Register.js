@@ -20,7 +20,10 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Basic client-side validation
+    setError('');
+    setSuccess('');
+
+    // Validation
     if (!formData.name || !formData.email || !formData.age || !formData.address || !formData.password) {
       setError('All fields are required');
       return;
@@ -29,92 +32,120 @@ const Register = () => {
       setError('Age must be a number');
       return;
     }
+
     try {
       const res = await axios.post('http://localhost:5000/users/register', formData);
       setSuccess('Registration successful! Redirecting to login...');
-      setError('');
-      setTimeout(() => navigate('/'), 2000); // Redirect after 2 seconds
+      setTimeout(() => navigate('/'), 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
-      setSuccess('');
       console.error(err);
     }
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-md">
-      <h1 className="text-2xl font-bold mb-4">Manager Registration</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {success && <p className="text-green-500 mb-4">{success}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="border p-2 w-full rounded"
-            placeholder="Enter your name"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="border p-2 w-full rounded"
-            placeholder="Enter your email"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Age</label>
-          <input
-            type="number"
-            name="age"
-            value={formData.age}
-            onChange={handleChange}
-            className="border p-2 w-full rounded"
-            placeholder="Enter your age"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Address</label>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            className="border p-2 w-full rounded"
-            placeholder="Enter your address"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="border p-2 w-full rounded"
-            placeholder="Enter your password"
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Register
-        </button>
-      </form>
-      <p className="mt-4">
-        Already have an account?{' '}
-        <a href="/" className="text-blue-500 hover:underline">
-          Login here
-        </a>
-      </p>
+    <div className="relative min-h-screen flex items-center justify-center px-4">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center z-0"
+        style={{ backgroundImage: "url('/mushreg.jpg')" }} // ✅ Real photo in public folder
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+      </div>
+
+      {/* Glassmorphic Form */}
+      <div className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-md p-8 rounded-xl shadow-2xl">
+        <h1 className="text-3xl font-semibold text-center text-white mb-6">
+          Manager Registration
+        </h1>
+
+        {error && (
+          <p className="bg-red-100 text-red-700 border border-red-300 p-2 rounded mb-4 text-sm font-medium">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="bg-green-100 text-green-700 border border-green-300 p-2 rounded mb-4 text-sm font-medium">
+            {success}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1 text-sm font-medium text-white">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your name"
+              className="w-full px-4 py-2 border border-white/50 rounded-md bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-white">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              className="w-full px-4 py-2 border border-white/50 rounded-md bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-white">Age</label>
+            <input
+              type="number"
+              name="age"
+              value={formData.age}
+              onChange={handleChange}
+              placeholder="Enter your age"
+              className="w-full px-4 py-2 border border-white/50 rounded-md bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-white">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="Enter your address"
+              className="w-full px-4 py-2 border border-white/50 rounded-md bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-white">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              className="w-full px-4 py-2 border border-white/50 rounded-md bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition duration-300"
+          >
+            Register
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-white mt-4">
+          Already have an account?{' '}
+          <a href="/" className="text-green-300 hover:underline font-medium">
+            Login here
+          </a>
+        </p>
+      </div>
     </div>
   );
 };
