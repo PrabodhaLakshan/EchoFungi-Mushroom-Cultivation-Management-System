@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import Navbar from "../Navbar/Nav";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -246,7 +247,14 @@ export default function SalesDash() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+  <div className="flex min-h-screen bg-gray-50">
+    {/* Left side - Navbar as sidebar */}
+    <div className="w-64 h-screen bg-white shadow-md sticky top-0">
+      <Navbar />
+    </div>
+
+    {/* Right side - Dashboard Content */}
+    <div className="flex-1 p-6 overflow-y-auto">
       <h2 className="text-3xl font-bold text-green-800 mb-6">Sales Manager Dashboard</h2>
 
       {/* Summary cards */}
@@ -308,7 +316,11 @@ export default function SalesDash() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-4 shadow rounded-lg">
           <h3 className="text-lg font-semibold mb-2">Sales (Revenue & Packets)</h3>
-          {timeLabels.length ? <Line data={timeSeriesData} options={timeSeriesOptions} /> : <p className="text-gray-500">No sales data available</p>}
+          {timeLabels.length ? (
+            <Line data={timeSeriesData} options={timeSeriesOptions} />
+          ) : (
+            <p className="text-gray-500">No sales data available</p>
+          )}
         </div>
 
         <div className="bg-white p-4 shadow rounded-lg">
@@ -317,19 +329,31 @@ export default function SalesDash() {
             <Pie data={ordersPieData} />
           </div>
           <div className="mt-4 text-sm text-gray-600">
-            <div>Pending: <strong>{ordersStatus.pending}</strong></div>
-            <div>Delivered: <strong>{ordersStatus.delivered}</strong></div>
+            <div>
+              Pending: <strong>{ordersStatus.pending}</strong>
+            </div>
+            <div>
+              Delivered: <strong>{ordersStatus.delivered}</strong>
+            </div>
           </div>
         </div>
 
         <div className="bg-white p-4 shadow rounded-lg">
           <h3 className="text-lg font-semibold mb-2">Top {topProducts.length} Selling Products</h3>
-          {topProducts.length ? <Bar data={topProductsData} /> : <p className="text-gray-500">No product sales yet</p>}
+          {topProducts.length ? (
+            <Bar data={topProductsData} />
+          ) : (
+            <p className="text-gray-500">No product sales yet</p>
+          )}
         </div>
 
         <div className="bg-white p-4 shadow rounded-lg">
           <h3 className="text-lg font-semibold mb-2">Product-wise Sales (Packets)</h3>
-          {productDistribution.length ? <Pie data={productPieData} /> : <p className="text-gray-500">No distribution data</p>}
+          {productDistribution.length ? (
+            <Pie data={productPieData} />
+          ) : (
+            <p className="text-gray-500">No distribution data</p>
+          )}
         </div>
       </div>
 
@@ -356,7 +380,9 @@ export default function SalesDash() {
                     <td className="py-2 px-3 text-sm">{o.ShopName}</td>
                     <td className="py-2 px-3 text-sm">{o.ProductId}</td>
                     <td className="py-2 px-3 text-sm">{o.Quantity}</td>
-                    <td className="py-2 px-3 text-sm">{o.OrderDate ? new Date(o.OrderDate).toLocaleDateString() : "-"}</td>
+                    <td className="py-2 px-3 text-sm">
+                      {o.OrderDate ? new Date(o.OrderDate).toLocaleDateString() : "-"}
+                    </td>
                     <td className="py-2 px-3 text-sm">{o.Status}</td>
                   </tr>
                 ))}
@@ -368,5 +394,7 @@ export default function SalesDash() {
         )}
       </div>
     </div>
-  );
+  </div>
+);
+
 }

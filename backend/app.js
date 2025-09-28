@@ -94,7 +94,6 @@ app.use("/api/sale",require("./Routes/SalesRoutes"));
 app.use("/api/orders",require("./Routes/OrderRoutes"));
 
 
-
 // ===============================
 // MongoDB connection
 // ===============================

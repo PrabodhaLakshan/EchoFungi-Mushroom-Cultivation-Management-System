@@ -13,41 +13,33 @@ function UpdateOrder() {
     ProductId: "",
     OrderDate: "",
     Quantity: 0,
-    Status: "Pending"
+    Status: "Pending",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch customers
   useEffect(() => {
-    axios.get("http://localhost:5000/Customer")
+    axios.get("http://localhost:5000/api/customers")
       .then(res => setCustomers(res.data.Customers || []))
-      .catch(err => console.error(err));
-  }, []);
+      .catch(console.error);
 
-  // Fetch products
-  useEffect(() => {
-    axios.get("http://localhost:5000/Product")
+    axios.get("http://localhost:5000/api/products")
       .then(res => setProducts(res.data.Products || []))
-      .catch(err => console.error(err));
+      .catch(console.error);
   }, []);
 
-  // Fetch order by ID
   useEffect(() => {
-    axios.get(`http://localhost:5000/Order/${id}`)
+    axios.get(`http://localhost:5000/api/orders/${id}`)
       .then(res => {
         const order = res.data.order;
-        if (!order) {
-          setError("Order not found");
-        } else {
-          setInputs({
-            ShopName: order.ShopName,
-            ProductId: order.ProductId,
-            OrderDate: order.OrderDate ? new Date(order.OrderDate).toISOString().split("T")[0] : "",
-            Quantity: order.Quantity,
-            Status: order.Status
-          });
-        }
+        if (!order) setError("Order not found");
+        else setInputs({
+          ShopName: order.ShopName,
+          ProductId: order.ProductId,
+          OrderDate: order.OrderDate ? new Date(order.OrderDate).toISOString().split("T")[0] : "",
+          Quantity: order.Quantity,
+          Status: order.Status
+        });
         setLoading(false);
       })
       .catch(err => {
@@ -68,7 +60,7 @@ function UpdateOrder() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/Order/${id}`, inputs);
+      await axios.put(`http://localhost:5000/api/orders/${id}`, inputs);
       navigate("/Order");
     } catch (err) {
       console.error(err);

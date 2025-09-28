@@ -13,23 +13,18 @@ function AddOrder() {
     Quantity: 1,
   });
 
-  // Fetch customers
   useEffect(() => {
     axios
-      .get("http://localhost:5000/Customer")
+      .get("http://localhost:5000/api/customers")
       .then((res) => setCustomers(res.data.Customers || []))
-      .catch((err) => console.error("Failed to fetch customers:", err));
-  }, []);
+      .catch(console.error);
 
-  // Fetch products
-  useEffect(() => {
     axios
-      .get("http://localhost:5000/Product")
+      .get("http://localhost:5000/api/products")
       .then((res) => setProducts(res.data.Products || []))
-      .catch((err) => console.error("Failed to fetch products:", err));
+      .catch(console.error);
   }, []);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setInputs((prev) => ({
@@ -38,20 +33,18 @@ function AddOrder() {
     }));
   };
 
-  // Submit order
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
+      await axios.post("http://localhost:5000/api/orders", {
         ShopName: inputs.ShopName,
         ProductId: Number(inputs.ProductId),
         OrderDate: inputs.OrderDate,
         Quantity: Number(inputs.Quantity),
-      };
-      await axios.post("http://localhost:5000/Order", payload);
+      });
       navigate("/Order");
     } catch (err) {
-      console.error("Failed to add order:", err);
+      console.error(err);
       alert("Failed to add order");
     }
   };
