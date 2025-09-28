@@ -27,23 +27,16 @@ function Employee() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-  "http://localhost:5000/employees",
-  {
-    name: String(inputs.name),
-    designation: String(inputs.designation),
-    email: String(inputs.email),
-    phone_number: String(inputs.phone_number),
-    date_of_joining: new Date(inputs.date_of_joining),
-    working_days: Number(inputs.working_days),
-    no_pay_days: Number(inputs.no_pay_days),
-    status: String(inputs.status),
-  },
-  {
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  }
-);
-
+      const res = await axios.post("http://localhost:5000/employees", {
+        name: String(inputs.name),
+        designation: String(inputs.designation),
+        email: String(inputs.email),
+        phone_number: String(inputs.phone_number),
+        date_of_joining: new Date(inputs.date_of_joining),
+        working_days: Number(inputs.working_days),
+        no_pay_days: Number(inputs.no_pay_days),
+        status: String(inputs.status),
+      });
 
       const employeeId = res.data.employee_id;
       const formattedId = "EMP" + String(employeeId).padStart(3, "0");

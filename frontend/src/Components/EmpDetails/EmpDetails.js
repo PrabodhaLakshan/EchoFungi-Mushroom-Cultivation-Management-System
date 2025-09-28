@@ -41,7 +41,7 @@ function EmpDetails() {
                 <th className="px-4 py-2">Working Days</th>
                 <th className="px-4 py-2">No Pay Days</th>
                 <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Actions</th>
+               
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-green-200">

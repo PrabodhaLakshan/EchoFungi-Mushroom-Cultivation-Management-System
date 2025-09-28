@@ -60,7 +60,7 @@ function SalarySlip() {
           <div>
             <h1 className="text-2xl font-bold">EcoFungi Pvt Ltd</h1>
             <p className="text-sm">Habaraduwa, Galle</p>
-            <p className="text-sm">Tel: +94 77 123 4567</p>
+            <p className="text-sm">Tel: +94 77 974 5000</p>
           </div>
           <div className="text-right">
             <h2 className="text-xl font-semibold">Salary Slip</h2>

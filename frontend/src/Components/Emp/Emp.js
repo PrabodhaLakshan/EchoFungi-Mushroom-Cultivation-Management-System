@@ -48,20 +48,6 @@ function Emp(props) {
       <td className="px-4 py-2">{working_days}</td>
       <td className="px-4 py-2">{no_pay_days}</td>
       <td className="px-4 py-2">{status}</td>
-      <td className="px-4 py-2 flex gap-2">
-        <Link
-          to={`/employeedetails/${_id}`}
-          className="px-3 py-1 rounded-md bg-[#4CAF50] text-white text-sm font-medium hover:bg-[#388E3C] transition"
-        >
-          Update
-        </Link>
-        <button
-          onClick={deleteHandler}
-          className="px-3 py-1 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition"
-        >
-          Delete
-        </button>
-      </td>
     </tr>
   );
 }

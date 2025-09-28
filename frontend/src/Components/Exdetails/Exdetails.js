@@ -11,28 +11,50 @@ const fetchHandler = async () => {
 
 function Exdetails() {
   const [expenses, setExpense] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState(""); // for month filter
+  const [selectedMonth, setSelectedMonth] = useState(""); // month filter
+  const [selectedCategory, setSelectedCategory] = useState(""); // category filter
+  const [searchId, setSearchId] = useState(""); // expenseId search
 
   useEffect(() => {
     fetchHandler().then((data) => setExpense(data.expenses));
   }, []);
 
-  // Filter by month
-  const filteredExpenses = selectedMonth
-    ? expenses.filter((ex) => {
-        const exDate = new Date(ex.date);
-        const monthYear = `${exDate.getFullYear()}-${String(
-          exDate.getMonth() + 1
-        ).padStart(2, "0")}`;
-        return monthYear === selectedMonth;
-      })
-    : [];
+  // ✅ First table (all expenses + search only)
+  const searchedExpenses = expenses.filter((ex) => {
+    return searchId
+      ? String(ex.expenseId).includes(searchId.trim())
+      : true;
+  });
 
-  // Calculate total for filtered expenses
+  // ✅ Second table (month + category filters only)
+  const filteredExpenses = expenses.filter((ex) => {
+    const exDate = new Date(ex.date);
+
+    const matchesMonth = selectedMonth
+      ? `${exDate.getFullYear()}-${String(exDate.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}` === selectedMonth
+      : true;
+
+    const matchesCategory = selectedCategory
+      ? ex.category === selectedCategory
+      : true;
+
+    return matchesMonth && matchesCategory;
+  });
+
+  // ✅ Calculate total for filtered expenses (only second table)
   const totalExpense = filteredExpenses.reduce(
     (sum, ex) => sum + Number(ex.amount),
     0
   );
+
+  // ✅ Reset filters
+  const clearFilters = () => {
+    setSelectedMonth("");
+    setSelectedCategory("");
+  };
 
   return (
     <div className="flex">
@@ -45,57 +67,109 @@ function Exdetails() {
           Expenses Details
         </h1>
 
-        {/* All Expenses Table */}
+        {/* 🔎 Search by Expense ID */}
+        <div className="mb-4 flex justify-center">
+          <input
+            type="text"
+            placeholder="Search by Expense ID..."
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            className="w-1/3 px-3 py-2 border border-[#A5D6A7] rounded-md focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+          />
+        </div>
+
+        {/* All Expenses Table (Search Only) */}
         <div className="overflow-x-auto shadow-md rounded-lg bg-white mb-10">
           <table className="min-w-full border border-[#A5D6A7] rounded-lg">
             <thead className="bg-[#1B5E20] text-white">
-              <tr>
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Expense ID</th>
-                <th className="px-4 py-2">Category</th>
-                <th className="px-4 py-2">Description</th>
-                <th className="px-4 py-2">Payment Method</th>
-                <th className="px-4 py-2">Amount</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
+            <tr>
+                <th className="px-4 py-2 text-left">Date</th>
+                <th className="px-4 py-2 text-left">Expense ID</th>
+                <th className="px-4 py-2 text-left">Category</th>
+                <th className="px-4 py-2 text-left">Description</th>
+                <th className="px-4 py-2 text-left">Payment Method</th>
+                <th className="px-4 py-2 text-left">Amount</th>
+                <th className="px-4 py-2 text-left">Actions</th>
+            </tr>
             </thead>
             <tbody className="bg-white divide-y divide-green-200">
-              {expenses && expenses.map((ex, i) => <Exp key={i} ex={ex} />)}
+              {searchedExpenses.length > 0 ? (
+                searchedExpenses.map((ex, i) => (
+                  <Exp
+                    key={i}
+                    ex={ex}
+                    onDelete={(id) =>
+                      setExpense((prev) => prev.filter((e) => e._id !== id))
+                    }
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="text-center text-gray-500 py-4">
+                    No expenses found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Filter by Month */}
+        {/* Filters Section */}
         <div className="bg-white p-4 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-[#1B5E20] mb-4">
-            Filter by Month
+            Filter Expenses
           </h2>
 
-          {/* Month Picker */}
-          <div className="mb-4">
+          <div className="flex gap-4 mb-4">
+            {/* Month Picker */}
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="border border-green-400 rounded p-2"
             />
+
+            {/* Category Picker */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="border border-green-400 rounded p-2"
+            >
+              <option value="">-- All Categories --</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Maintenance & Repairs">
+                Maintenance & Repairs
+              </option>
+              <option value="Transportation">Transportation</option>
+              <option value="Inventory">Inventory</option>
+              <option value="Other">Other</option>
+            </select>
+
+            {/* ✅ Clear Filters Button */}
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+            >
+              Clear Filters
+            </button>
           </div>
 
-          {/* Filtered Table */}
-          {selectedMonth && (
+          {/* Filtered Table (Month + Category Only) */}
+          {(selectedMonth || selectedCategory) && (
             <>
               <div className="overflow-x-auto shadow-md rounded-lg">
                 <table className="min-w-full border border-[#A5D6A7] rounded-lg">
                   <thead className="bg-[#388E3C] text-white">
-                    <tr>
-                      <th className="px-4 py-2">Date</th>
-                      <th className="px-4 py-2">Expense ID</th>
-                      <th className="px-4 py-2">Category</th>
-                      <th className="px-4 py-2">Description</th>
-                      <th className="px-4 py-2">Payment Method</th>
-                      <th className="px-4 py-2">Amount</th>
-                    </tr>
+                  <tr>
+                    <th className="px-4 py-2 text-left">Date</th>
+                    <th className="px-4 py-2 text-left">Expense ID</th>
+                    <th className="px-4 py-2 text-left">Category</th>
+                    <th className="px-4 py-2 text-left">Description</th>
+                    <th className="px-4 py-2 text-left">Payment Method</th>
+                    <th className="px-4 py-2 text-left">Amount</th>
+                   </tr>
                   </thead>
+
                   <tbody className="bg-white divide-y divide-green-200">
                     {filteredExpenses.length > 0 ? (
                       filteredExpenses.map((ex, i) => (
@@ -119,7 +193,7 @@ function Exdetails() {
                           colSpan="6"
                           className="text-center text-gray-500 py-4"
                         >
-                          No expenses found for this month.
+                          No expenses found for this filter.
                         </td>
                       </tr>
                     )}

@@ -35,6 +35,7 @@ import EmpDetails from "./Components/EmpDetails/EmpDetails"
 import UpdateExpense from "./Components/UpdateExpense/UpdateExpense";
 import UpdateSalary from "./Components/UpdateSalary/UpdateSalary";
 import SalarySlip from "./Components/SalarySlip/SalarySlip";
+import Freport from "./Components/freport/freport";
 import { useNavigate } from 'react-router-dom';
 // import Waiting from './Components/waiting/waiting';
 
@@ -128,6 +129,7 @@ function App() {
           <Route path="/exdetails/:id" element={<UpdateExpense />}/>
           <Route path="/Paydetails/:id" element={<UpdateSalary />}/>
           <Route path="/salarySlip/:id" element={<SalarySlip/>}/>
+          <Route path="/freport" element={<Freport/>}/>
               
  <Route path="/Inventory_Manager-dashboard" element={<InventoryDashboard />} />
           <Route path="/additem" element={<AddInventory />} />

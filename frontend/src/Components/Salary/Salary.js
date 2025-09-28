@@ -23,11 +23,19 @@ function Salary({ sal }) {
   const navigate = useNavigate();
 
   const deleteHandler = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this salary record?"
+    );
+
+    if (!confirmDelete) return; // ❌ stop if user cancels
+
     try {
       await axios.delete(`http://localhost:5000/salaries/${_id}`);
-      navigate("/paymentdetails"); // redirect after delete
+      alert("Salary record deleted successfully ✅");
+      navigate(0); // ✅ refresh page after delete
     } catch (err) {
       console.error("Failed to delete salary:", err);
+      alert("❌ Failed to delete salary. Please try again.");
     }
   };
 
@@ -52,7 +60,8 @@ function Salary({ sal }) {
 
       {/* Bonus */}
       <td className="px-4 py-2">
-        Rate: {bonus?.rate || 0}%, Amount: Rs {bonus?.amount?.toLocaleString() || 0}
+        Rate: {bonus?.rate || 0}%, Amount: Rs{" "}
+        {bonus?.amount?.toLocaleString() || 0}
       </td>
 
       {/* Allowances */}
@@ -79,8 +88,8 @@ function Salary({ sal }) {
       {/* Totals */}
       <td className="px-4 py-2">
         Total Allowances: Rs {totals?.totalAllowances?.toLocaleString() || 0},{" "}
-        Total Deductions: Rs {totals?.totalDeductions?.toLocaleString() || 0}, Net: Rs{" "}
-        {totals?.netSalary?.toLocaleString() || 0}
+        Total Deductions: Rs {totals?.totalDeductions?.toLocaleString() || 0},
+        Net: Rs {totals?.netSalary?.toLocaleString() || 0}
       </td>
 
       {/* Timestamps */}
@@ -102,6 +111,8 @@ function Salary({ sal }) {
           Delete
         </button>
       </td>
+
+      {/* Salary Slip */}
       <td className="px-4 py-2 flex space-x-2">
         <Link
           to={`/salarySlip/${_id}`}

@@ -23,6 +23,10 @@ function Payroll() {
   const [employees, setEmployees] = useState([]);
   const [workingDays, setWorkingDays] = useState(null); // from employee model
 
+  // ✅ Validation state
+  const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState("");
+
   // ------------ Fetch Employees (list) ------------
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -182,22 +186,90 @@ function Payroll() {
   }, [inputs.employee_id, workingDays, inputs.basicSalary, inputs.overtime.hours, inputs.overtime.days,calcOtPay]);
 
   // ------------ Totals ------------
-  const totalAllowances =
+  const totalAllowances = Number(
+  (
     inputs.allowances.reduce((sum, a) => sum + toNumber(a.amount), 0) +
     toNumber(inputs.overtime.pay) +
-    toNumber(inputs.bonus.amount);
+    toNumber(inputs.bonus.amount)
+  ).toFixed(2)
+);
 
-  const totalDeductions =
+const totalDeductions = Number(
+  (
     toNumber(inputs.deductions.noPay) +
     toNumber(inputs.deductions.epf) +
     toNumber(inputs.deductions.apit) +
-    toNumber(inputs.deductions.other);
+    toNumber(inputs.deductions.other)
+  ).toFixed(2)
+);
 
-  const netSalary = toNumber(inputs.basicSalary) + totalAllowances - totalDeductions;
+const netSalary = Number(
+  (toNumber(inputs.basicSalary) + totalAllowances - totalDeductions).toFixed(2)
+);
+
+
+  // ------------ VALIDATION FUNCTION ------------
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Month validation (not in future)
+    if (inputs.month) {
+      const selectedDate = new Date(inputs.month + "-01");
+      const now = new Date();
+      if (selectedDate > now) {
+        newErrors.month = "Month cannot be in the future";
+      }
+    } else {
+      newErrors.month = "Month is required";
+    }
+
+    // OT hours
+    if (toNumber(inputs.overtime.hours) < 0) {
+      newErrors.otHours = "OT Hours cannot be negative";
+    }
+
+    // OT days
+    if (toNumber(inputs.overtime.days) < 0) {
+      newErrors.otDays = "OT Days cannot be negative";
+    } else if (toNumber(inputs.overtime.days) > 31) {
+      newErrors.otDays = "OT Days cannot exceed 31";
+    }
+
+    // Bonus rate
+    if (toNumber(inputs.bonus.rate) < 0) {
+      newErrors.bonusRate = "Bonus rate cannot be negative";
+    } else if (toNumber(inputs.bonus.rate) > 100) {
+      newErrors.bonusRate = "Bonus rate cannot exceed 100%";
+    }
+    //basic
+    if (inputs.basicSalary === "" || inputs.basicSalary === null) {
+    newErrors.basicSalary = "Basic Salary is required";
+    } else if (toNumber(inputs.basicSalary) < 0) {
+    newErrors.basicSalary = "Basic Salary cannot be negative";
+    } 
+
+    // ----------------- Allowances Validation -----------------
+    inputs.allowances.forEach((allowance, index) => {
+      // Only validate if allowance name is selected
+      if (allowance.name) {
+      if (allowance.amount === "" || toNumber(allowance.amount) <= 0) {
+      newErrors[`allowanceAmount${index}`] = "Allowance amount must be greater than 0";
+    }
+    }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // ------------ Submit ------------
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage("");
+
+    if (!validateForm()) {
+      return; // stop submission if errors
+    }
     try {
       const payload = {
         employee_id: String(inputs.employee_id),
@@ -227,7 +299,7 @@ function Payroll() {
         totals: {
           totalAllowances,
           totalDeductions,
-          netSalary,
+          netSalary: Number(netSalary.toFixed(2)),
         },
       };
 
@@ -237,10 +309,15 @@ function Payroll() {
       const formattedCode = "SAL" + String(codeNumber).padStart(3, "0");
       setInputs((prev) => ({ ...prev, salary_id: formattedCode }));
 
-      navigate("/paymentdetails");
+      setSuccessMessage("✅ Salary added successfully!");
+      
+      setTimeout(() => {
+        navigate("/paymentdetails");
+      }, 2000);
     } catch (err) {
       console.error("Error adding salary:", err);
     }
+      
   };
 
   //auto generated bonus
@@ -394,7 +471,7 @@ useEffect(() => {
               {/* Show working days if available */}
               {workingDays ? (
                 <p className="mt-1 text-sm text-gray-600">
-                  Working Days (from employee model): <span className="font-medium">{workingDays}</span>
+                  Working Days : <span className="font-medium">{workingDays}</span>
                 </p>
               ) : (
                 inputs.employee_id && (
@@ -432,50 +509,76 @@ useEffect(() => {
 
             {/* Month */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Month</label>
+              <label className="block text-sm font-medium">Month</label>
               <input
                 type="month"
                 name="month"
                 value={inputs.month}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 p-2"
+                onChange={(e) =>
+                  setInputs((prev) => ({ ...prev, month: e.target.value }))
+                }
+                className="w-full border rounded-lg p-2"
               />
+              {errors.month && (
+                <p className="text-red-500 text-sm">{errors.month}</p>
+              )}
             </div>
 
             {/* Basic Salary */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Basic Salary</label>
+            <label className="block text-sm font-medium">Basic Salary</label>
               <input
                 type="number"
                 name="basicSalary"
                 value={inputs.basicSalary}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 p-2"
-              />
+                onChange={(e) =>
+                setInputs((prev) => ({ ...prev, basicSalary: e.target.value }))
+                }
+                className="w-full border rounded-lg p-2"
+                />
+            {errors.basicSalary && (
+            <p className="text-red-500 text-sm">{errors.basicSalary}</p>
+            )}
             </div>
 
             {/* Overtime & Bonus */}
             <h2 className="font-semibold mt-6">Overtime & Bonus</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">OT Hours</label>
-                <input
-                  type="number"
-                  value={inputs.overtime.hours}
-                  onChange={(e) => handleOvertimeChange("hours", e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 p-2"
-                />
-              </div>
+              <label className="block text-sm font-medium">OT Hours</label>
+              <input
+                type="number"
+                value={inputs.overtime.hours}
+                onChange={(e) =>
+                  setInputs((prev) => ({
+                    ...prev,
+                    overtime: { ...prev.overtime, hours: e.target.value },
+                  }))
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              {errors.otHours && (
+                <p className="text-red-500 text-sm">{errors.otHours}</p>
+              )}
+            </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">OT Days</label>
-                <input
-                  type="number"
-                  value={inputs.overtime.days}
-                  onChange={(e) => handleOvertimeChange("days", e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 p-2"
-                />
-              </div>
+              <label className="block text-sm font-medium">OT Days</label>
+              <input
+                type="number"
+                value={inputs.overtime.days}
+                onChange={(e) =>
+                  setInputs((prev) => ({
+                    ...prev,
+                    overtime: { ...prev.overtime, days: e.target.value },
+                  }))
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              {errors.otDays && (
+                <p className="text-red-500 text-sm">{errors.otDays}</p>
+              )}
+            </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">OT Pay</label>
@@ -489,14 +592,22 @@ useEffect(() => {
               <br></br>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Bonus Rate</label>
-                <input
-                  type="number"
-                  value={inputs.bonus.rate}
-                  onChange={(e) => handleBonusChange("rate", e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 p-2"
-                />
-              </div>
+              <label className="block text-sm font-medium">Bonus Rate (%)</label>
+              <input
+                type="number"
+                value={inputs.bonus.rate}
+                onChange={(e) =>
+                  setInputs((prev) => ({
+                    ...prev,
+                    bonus: { ...prev.bonus, rate: e.target.value },
+                  }))
+                }
+                className="w-full border rounded-lg p-2"
+              />
+              {errors.bonusRate && (
+                <p className="text-red-500 text-sm">{errors.bonusRate}</p>
+              )}
+            </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Bonus Amount</label>
@@ -509,44 +620,49 @@ useEffect(() => {
               </div>
             </div>
 
+          
             {/* Allowances */}
-            <h2 className="font-semibold mt-6">Allowances</h2>
-            <div className="space-y-2">
-              {inputs.allowances.map((allowance, index) => (
-                <div key={index} className="flex gap-2">
-                  <select
-                    value={allowance.name}
-                    onChange={(e) => handleAllowanceChange(index, "name", e.target.value)}
-                    className="flex-1 rounded-lg border border-green-300 p-2"
-                  >
-                    <option value="">-- Select Allowance --</option>
-                    <option value="Cost of Living Allowance">Cost of Living Allowance</option>
-                    <option value="Food Allowance">Food Allowance</option>
-                    <option value="Conveyance Allowance">Conveyance Allowance</option>
-                    <option value="Medical Allowance">Medical Allowance</option>
-                    <option value="Other">Other</option>
-                  </select>
+           {inputs.allowances.map((allowance, index) => (
+            <div key={index} className="flex flex-col gap-1">
+            <div className="flex gap-2">
+            <select
+              value={allowance.name}
+              onChange={(e) => handleAllowanceChange(index, "name", e.target.value)}
+              className="flex-1 rounded-lg border border-green-300 p-2"
+              >
+              <option value="">-- Select Allowance --</option>
+              <option value="Cost of Living Allowance">Cost of Living Allowance</option>
+              <option value="Food Allowance">Food Allowance</option>
+              <option value="Conveyance Allowance">Conveyance Allowance</option>
+              <option value="Medical Allowance">Medical Allowance</option>
+              <option value="Other">Other</option>
+            </select>
 
-                  <input
-                    type="number"
-                    placeholder="Amount"
-                    value={allowance.amount}
-                    onChange={(e) => handleAllowanceChange(index, "amount", e.target.value)}
-                    className="w-40 rounded-lg border border-green-300 p-2"
-                  />
+            <input
+              type="number"
+              placeholder="Amount"
+              value={allowance.amount}
+              onChange={(e) => handleAllowanceChange(index, "amount", e.target.value)}
+              className="w-40 rounded-lg border border-green-300 p-2"
+            />
 
-                  {index > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => removeAllowance(index)}
-                      className="bg-red-600 text-white px-3 rounded-lg"
-                    >
-                      X
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
+            {index > 0 && (
+              <button
+                type="button"
+                onClick={() => removeAllowance(index)}
+                className="bg-red-600 text-white px-3 rounded-lg"
+              >
+                X
+              </button>
+            )}
+          </div>
+
+          {/* Error message */}
+          {errors[`allowanceAmount${index}`] && (
+          <p className="text-red-500 text-sm">{errors[`allowanceAmount${index}`]}</p>
+          )}
+          </div>
+          ))}
 
             <button
               type="button"
@@ -597,6 +713,11 @@ useEffect(() => {
               Add Salary
             </button>
           </form>
+          {successMessage && (
+            <p className="mt-4 text-green-600 font-semibold">
+              {successMessage}
+            </p>
+          )}
         </div>
       </main>
     </div>

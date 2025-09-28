@@ -1,10 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-function Exp(props) {
-  const { _id, date, expenseId, category, description, paymentMethod, amount } = props.ex;
+function Exp({ ex, onDelete }) {
+  const { _id, date, expenseId, category, description, paymentMethod, amount } = ex;
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -13,12 +12,16 @@ function Exp(props) {
     return date.toISOString().split("T")[0];
   };
 
-  const navigate = useNavigate();
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete Expense ID ${expenseId}?`
+    );
+    if (!confirmDelete) return;
 
-  const deleteHandler = async () => {
     try {
       await axios.delete(`http://localhost:5000/expenses/${_id}`);
-      navigate("/exdetails");
+      // Notify parent component to remove this item from state
+      if (onDelete) onDelete(_id);
     } catch (err) {
       console.error("Failed to delete expense:", err);
     }
@@ -40,7 +43,7 @@ function Exp(props) {
           Update
         </Link>
         <button
-          onClick={deleteHandler}
+          onClick={handleDelete}
           className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
         >
           Delete
