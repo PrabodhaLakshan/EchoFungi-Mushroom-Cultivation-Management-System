@@ -19,12 +19,16 @@ function UpdateSchedule() {
   const [relayStatus, setRelayStatus] = useState("Unknown");
   const [loading, setLoading] = useState(false);
 
+  // ---------------- Fetch schedule ----------------
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/sprays/${id}`);
-        if (res.data && res.data.spray) {
-          setFormData(res.data.spray);
+        const res = await axios.get(`http://localhost:5000/sprays/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        if (res.data && (res.data.spray || res.data)) {
+          // some APIs return {spray: {...}}, some just the object
+          setFormData(res.data.spray || res.data);
         }
       } catch (err) {
         console.error("Failed to fetch schedule:", err);
@@ -33,10 +37,13 @@ function UpdateSchedule() {
     fetchSchedule();
   }, [id]);
 
+  // ---------------- Fetch batches ----------------
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/batches");
+        const res = await axios.get("http://localhost:5000/batches", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
         setBatches(res.data.batches || []);
       } catch (err) {
         console.error("Error fetching batches:", err);
@@ -72,7 +79,9 @@ function UpdateSchedule() {
     }
 
     try {
-      await axios.put(`http://localhost:5000/sprays/${id}`, formData);
+      await axios.put(`http://localhost:5000/sprays/${id}`, formData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
       alert("Schedule updated successfully!");
       navigate(-1);
     } catch (err) {
@@ -88,7 +97,7 @@ function UpdateSchedule() {
   const handleSidebarClick = (section) => {
     setActiveSection(section);
     if (section === "environmentM") {
-      navigate("/environmentM");
+      navigate("/Environment_Manager-dashboard");
     }
   };
 

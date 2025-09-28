@@ -1,8 +1,10 @@
 const mongoose = require("mongoose");
+const AutoIncrement = require("mongoose-sequence")(mongoose);
+
 const Schema = mongoose.Schema;
 
 const batchSchema = new Schema({
-    createDate: {
+     createDate: {
         type: Date,
         required: true,
     },
@@ -22,8 +24,9 @@ const batchSchema = new Schema({
         type: Date,
         required: true,
     }
-    
 });
-module.exports = mongoose.model("BatchModel",//file name
-                                batchSchema //function name
-)
+
+// Auto-increment field 'id'
+batchSchema.plugin(AutoIncrement, { inc_field: "batchid" });
+
+module.exports = mongoose.model("batchModel", batchSchema);

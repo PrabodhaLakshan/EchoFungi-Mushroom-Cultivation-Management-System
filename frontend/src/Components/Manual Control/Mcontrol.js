@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 function Mcontrol() {
-  const [schedules, setSchedules] = useState([]); // will be filled from DB
+  const [schedules, setSchedules] = useState([]); 
   const [formData, setFormData] = useState({
     day: 'every',
     start: '',
@@ -13,11 +13,15 @@ function Mcontrol() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const navigate = useNavigate();
 
+  const token = localStorage.getItem("token");
+
   // Fetch schedules
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/sprays");
+        const response = await axios.get("http://localhost:5000/sprays", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setSchedules(response.data.sprays); 
       } catch (error) {
         console.error("Failed to load schedules:", error);
@@ -27,13 +31,15 @@ function Mcontrol() {
     fetchSchedules();
     const intervalId = setInterval(fetchSchedules, 1000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [token]);
 
   // Fetch batches
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/batches");
+        const res = await axios.get("http://localhost:5000/batches", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setBatches(res.data.batches);
       } catch (err) {
         console.error("Error fetching batches:", err);
@@ -41,7 +47,7 @@ function Mcontrol() {
       }
     };
     fetchBatches();
-  }, []);
+  }, [token]);
 
   const handleFormChange = (e) => {
     setFormData({
@@ -50,7 +56,6 @@ function Mcontrol() {
     });
   };
 
-  // Updated with validations 
   const handleAddSchedule = async () => {
     if (!selectedBatch) {
       alert("Please select a batch!");
@@ -59,19 +64,16 @@ function Mcontrol() {
 
     const { start, end, day } = formData;
 
-    // Validation: required fields
     if (!start || !end) {
       alert("Please fill start and end time.");
       return;
     }
 
-    // Validation: end > start
     if (end <= start) {
       alert("End time must be later than start time.");
       return;
     }
 
-    // Validation: max 2 hours
     const startDate = new Date(`1970-01-01T${start}:00`);
     const endDate = new Date(`1970-01-01T${end}:00`);
     const diffMinutes = (endDate - startDate) / (1000 * 60);
@@ -88,17 +90,17 @@ function Mcontrol() {
     };
 
     try {
-      const response = await axios.post("http://localhost:5000/sprays", newSchedule);
+      const response = await axios.post("http://localhost:5000/sprays", newSchedule, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      // Add returned object from DB
       setSchedules([...schedules, response.data.sprays || response.data]);
 
-      // Reset form
       setFormData({ day: 'every', start: '', end: '' });
       setSelectedBatch("");
     } catch (error) {
       if (error.response && error.response.status === 400) {
-        alert(error.response.data.message); // backend duplicate/validation error
+        alert(error.response.data.message);
       } else {
         console.error("Failed to add schedule:", error);
         alert("Failed to add schedule. See console for details.");
@@ -108,7 +110,9 @@ function Mcontrol() {
 
   const handleDeleteSchedule = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/sprays/${id}`);
+      await axios.delete(`http://localhost:5000/sprays/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setSchedules(prev => prev.filter(schedule => schedule._id !== id));
     } catch (error) {
       console.error("Failed to delete schedule:", error);
@@ -124,48 +128,54 @@ function Mcontrol() {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  // Control relay (turn water pump on or off)
   const controlRelay = async (isOn) => {
     if (isOn) {
       try {
-        await axios.get(`http://localhost:5000/iot/sprayOn`);
-        await axios.get(`http://localhost:5000/iot/buzzerOn`);
-        alert("Water pump is ON!");  // Notify the user
+        await axios.get(`http://localhost:5000/iot/sprayOn`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await axios.get(`http://localhost:5000/iot/buzzerOn`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert("Water pump is ON!");  
       } catch (error) {
         console.error('Error controlling relay:', error);
       }
     } else {
       try {
-        await axios.get(`http://localhost:5000/iot/sprayOff`);
-        await axios.get(`http://localhost:5000/iot/buzzerOff`);
-        alert("Water pump is OFF!");  // Notify the user
+        await axios.get(`http://localhost:5000/iot/sprayOff`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await axios.get(`http://localhost:5000/iot/buzzerOff`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert("Water pump is OFF!");  
       } catch (error) {
         console.error('Error controlling relay:', error);
       }
     }
   };
 
-  // Check schedules against current time
   useEffect(() => {
     const checkSchedules = () => {
       const currentTime = new Date();
       const currentDay = currentTime.toLocaleString('en-us', { weekday: 'long' }).toLowerCase();
-      const currentTimeStr = currentTime.toISOString().split('T')[1].slice(0, 5);  // HH:MM format
+      const currentTimeStr = currentTime.toISOString().split('T')[1].slice(0, 5);  
 
       schedules.forEach(schedule => {
         if (schedule.day === currentDay || schedule.day === 'Every Day') {
           if (schedule.stime === currentTimeStr) {
-            controlRelay(true);  // Turn on the water pump
+            controlRelay(true);  
           }
           if (schedule.endtime === currentTimeStr) {
-            controlRelay(false);  // Turn off the water pump
+            controlRelay(false);  
           }
         }
       });
     };
 
-    const intervalId = setInterval(checkSchedules, 60000);  // Check every minute
-    return () => clearInterval(intervalId);  // Cleanup on unmount
+    const intervalId = setInterval(checkSchedules, 60000);  
+    return () => clearInterval(intervalId);  
   }, [schedules]);
 
   return (
@@ -179,7 +189,7 @@ function Mcontrol() {
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
-            {/* Batch Select - Fixed Styles */}
+            {/* Batch Select */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Select Batch</label>
               <select
@@ -235,6 +245,7 @@ function Mcontrol() {
                 value={formData.end}
                 onChange={handleFormChange}
                 className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm" 
+                min={formData.start || "00:00"}   // ✅ only allow times >= start
               />
             </div>
           </div>
