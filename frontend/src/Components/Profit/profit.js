@@ -16,18 +16,29 @@ function ProfitLoss() {
 
   const handleGenerate = async (e) => {
     e.preventDefault();
+
     if (!month || !year) return alert("Please select month and year");
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/profits/generate", {
-        month: Number(month),
-        year: Number(year),
-      });
+      const token = localStorage.getItem('token');
+      if (!token) return alert("You are not logged in!");
+
+      const res = await axios.post(
+        "http://localhost:5000/profits/generate",
+        {
+          month: Number(month),
+          year: Number(year),
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
       setResult(res.data.pl);
     } catch (err) {
       console.error(err);
-      alert("Error generating Profit & Loss");
+      alert(err.response?.data?.message || "Error generating Profit & Loss");
     } finally {
       setLoading(false);
     }
@@ -39,10 +50,9 @@ function ProfitLoss() {
 
       <div className="ml-52 flex-1 flex flex-col items-center p-10">
         <h1 className="text-3xl font-bold text-green-700 mb-8 text-center">
-          📊  Profit & Loss 
+          📊 Profit & Loss
         </h1>
 
-        {/* Form Card */}
         <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-8 mb-12 border border-green-200">
           <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col">
@@ -82,11 +92,10 @@ function ProfitLoss() {
           </form>
         </div>
 
-        {/* Result Cards */}
         {result && (
           <div className="w-full max-w-5xl flex flex-col items-center gap-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-              
+
               {/* Revenue */}
               <div className="bg-green-50 border border-green-300 rounded-xl shadow-md p-6 hover:shadow-lg transition">
                 <h2 className="text-xl font-semibold text-green-700 mb-4 text-center">Revenue</h2>
@@ -121,7 +130,6 @@ function ProfitLoss() {
 
             </div>
 
-            {/* View Detailed Report */}
             <Link
               to="/freport"
               state={{ month: Number(month), year: Number(year) }}

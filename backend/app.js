@@ -81,6 +81,7 @@ app.use("/suppliers",supplierRouter);
 app.use("/purchases",PurchaseRouter);
 app.use("/bag",BagRouter);
 app.use("/batches",batchrouter);
+app.use("/profits",ProfitRouter);
 
 app.use("/Customer",Crouter);
 app.use("/Product",Prouter);
