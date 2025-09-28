@@ -68,6 +68,31 @@ import UpdateBatch from "./Components/UpdateBatch/UpdateBatch";
 import Addbag from "./Components/Add Bag/BagManager";
 import SendPdf from "./Components/SendPdf/SendPdf";
 
+//Sales
+
+import SalesDash from "./Components/SalesDash/SalesDash";
+
+import AddSales from "./Components/Sales/AddSales";
+import Sales from "./Components/Sales/Sales";
+import UpdateSales from "./Components/Sales/UpdateSales";
+
+import AddCustomer from "./Components/Customer/AddCustomer";
+import Customer from "./Components/Customer/Customer";
+import UpdateCustomer from "./Components/Customer/UpdateCustomer";
+
+import AddProduct from "./Components/Product/AddProduct";
+import Product from "./Components/Product/Product";
+import UpdateProduct from "./Components/Product/UpdateProduct";
+
+import AddStock from "./Components/Stock/AddStock";
+import Stock from "./Components/Stock/Stock";
+import UpdateStock from "./Components/Stock/UpdateStock";
+
+import AddOrder from "./Components/Order/AddOrder";
+import Order from "./Components/Order/Order";
+import UpdateOrder from "./Components/Order/UpdateOrder";
+
+
 
 function App() {
    const Navigate = useNavigate();
@@ -135,10 +160,29 @@ function App() {
           <Route path="/addbag" element={<Addbag />}/>
 
 
+          <Route path="/sales_manager-dashboard" element={<SalesDash />}/>
+          <Route path="/Dash" element={<SalesDash />}/>
+
+          <Route path="/AddSales" element={<AddSales />}/>
+          <Route path="/Sales" element={<Sales />}/>
+          <Route path="/Sales/:id" element={<UpdateSales />}/>
+
+          <Route path="/AddCustomer" element={<AddCustomer />}/>
+          <Route path="/Customer" element={<Customer />}/>
+          <Route path="/Customer/:id" element={<UpdateCustomer />}/>
+
+          <Route path="/AddProduct" element={<AddProduct />}/>
+          <Route path="/Product" element={<Product />}/>
+          <Route path="/Product/:id" element={<UpdateProduct />}/>
 
 
+          <Route path="/AddStock" element={<AddStock />}/>
+          <Route path="/Stock" element={<Stock />}/>
+          <Route path="/Stock/:id" element={<UpdateStock />}/>
 
-
+          <Route path="/AddOrder" element={<AddOrder />}/>
+          <Route path="/Order" element={<Order />}/>
+          <Route path="/Order/:id" element={<UpdateOrder />}/>
 
 
        

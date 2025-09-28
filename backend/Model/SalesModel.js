@@ -3,30 +3,33 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 const Schema = mongoose.Schema;
 
 const salesSchema = new Schema({
-    
-    CustomerId :{
-        type:String,//datatype
-        required:true,//validate
-    },
-    NumberOfPackets :{
-        type:String,//datatype
-        required:true,//validate
-    },
-   
-    NumberOfReturns :{
-        type:String,//datatype
-        required:true,//validate
-    },
-     Date :{
-        type:Date,//datatype
-        required:true,//validate
-    },
-     TotalPrice:{
-        type:Number,//datatype
-        required:true,//validate
-    },
+  ShopName: {
+    type: String,
+    required: true,
+  },
+  ProductId: {
+    type: Number,
+    required: true,
+  },
+  Date: {
+    type: Date,
+    required: true,
+  },
+  NumberOfPackets: {
+    type: Number,
+    required: true,
+  },
+  NumberOfReturns: {
+    type: Number,
+    required: true,
+  },
+  TotalPrice: {
+    type: Number,
+    required: true,
+  },
 });
-// Auto-increment field 'id'
+
+// Auto-increment
 salesSchema.plugin(AutoIncrement, { inc_field: "SalesId" });
 
-module.exports = mongoose.model("SalesModel",salesSchema);
+module.exports = mongoose.model("SalesModel", salesSchema);

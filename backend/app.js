@@ -21,10 +21,11 @@ const PurchaseRouter=require("./Routes/PurchaseRoute");
 const batchrouter=require("./Routes/BatchRoutes");
 const BagRouter=require("./Routes/bagRoutes");
 
-
-
-
-
+const Crouter = require("./Routes/CustomerRoutes");
+const Prouter = require("./Routes/ProductRoutes");
+const Srouter = require("./Routes/SalesRoutes");
+const Hrouter = require("./Routes/StockRoutes");
+const Orouter = require("./Routes/OrderRoutes");
 
 
 dotenv.config();
@@ -80,6 +81,17 @@ app.use("/suppliers",supplierRouter);
 app.use("/purchases",PurchaseRouter);
 app.use("/bag",BagRouter);
 app.use("/batches",batchrouter);
+
+app.use("/Customer",Crouter);
+app.use("/Product",Prouter);
+app.use("/Stock",Hrouter);
+app.use("/Sale",Srouter);
+app.use("/Order",Orouter);
+app.use("/api/customers",require("./Routes/CustomerRoutes"));
+app.use("/api/products",require("./Routes/ProductRoutes"));
+app.use("/api/stock",require("./Routes/StockRoutes"));
+app.use("/api/sale",require("./Routes/SalesRoutes"));
+app.use("/api/orders",require("./Routes/OrderRoutes"));
 
 
 
