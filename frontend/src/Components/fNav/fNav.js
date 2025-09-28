@@ -6,7 +6,7 @@ function Nav() {
   const location = useLocation(); // for active link highlight
 
   const menuItems = [
-    { icon: <FaTachometerAlt />, label: "Dashboard", path: "/dashboard" },
+    { icon: <FaTachometerAlt />, label: "Dashboard", path: "/finance_manager-dashboard" },
     { icon: <FaMoneyBillWave />, label: "Payroll", path: "/payroll" },
     { icon: <FaRegChartBar />, label: "Expenses", path: "/expense" },
     { icon: <FaChartLine />, label: "Profit & Loss", path: "/profit" },

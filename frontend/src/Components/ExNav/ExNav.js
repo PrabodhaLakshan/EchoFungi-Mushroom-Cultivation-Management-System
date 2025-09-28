@@ -6,7 +6,7 @@ function ExNav() {
   const location = useLocation(); // to highlight active link
 
   const menuItems = [
-     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/dashboard" },
+     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/finance_manager-dashboard" },
     { icon: <FaPlusCircle />, label: "Add Expenses", path: "/expense" },
     { icon: <FaListAlt />, label: "Expenses Details", path: "/exdetails" },
     { icon: <FaChartPie />, label: "Reports", path: "/exreports" },

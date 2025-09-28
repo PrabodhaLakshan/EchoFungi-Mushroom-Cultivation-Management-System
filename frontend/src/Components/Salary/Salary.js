@@ -38,39 +38,42 @@ function Salary({ sal }) {
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-md border border-[#1B5E20] p-6 hover:shadow-lg transition flex flex-col">
+    <div className="w-full bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition duration-300 flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-start border-b pb-3 mb-3">
+      <div className="flex justify-between items-start border-b border-gray-200 pb-3 mb-4">
         <div>
-          <h2 className="text-xl font-bold text-[#1B5E20] mb-1">Employee ID: {employee_id}</h2>
-          <p className="text-gray-700 font-semibold">Name: {name}</p>
+          <h2 className="text-xl font-bold text-gray-900">
+            Employee ID: <span className="text-green-700">{employee_id}</span>
+          </h2>
+          <p className="text-gray-800 font-medium">Name: {name}</p>
           <p className="text-gray-600">Designation: {designation}</p>
           <p className="text-gray-600">Month: {month}</p>
         </div>
-        <div className="text-right text-gray-500 text-sm">
-          <p>Created: {new Date(createdAt).toLocaleDateString()}</p>
-          <p>Updated: {new Date(updatedAt).toLocaleDateString()}</p>
+        <div className="text-right text-gray-500 text-xs md:text-sm">
+          <p>📅 Created: {new Date(createdAt).toLocaleDateString()}</p>
+          <p>✏️ Updated: {new Date(updatedAt).toLocaleDateString()}</p>
         </div>
       </div>
 
       {/* Salary Details */}
-      <div className="flex flex-col md:flex-row gap-6 mb-4">
+      <div className="flex flex-col md:flex-row gap-8 mb-4">
         {/* Earnings */}
-        <div className="flex-1">
-          <h3 className="font-bold text-[#1B5E20] mb-2">Earnings</h3>
-          <ul className="space-y-1 text-gray-700">
-            <li>Basic Salary: Rs {basicSalary?.toLocaleString()}</li>
+        <div className="flex-1 bg-gray-50 rounded-lg p-4 border border-gray-100">
+          <h3 className="font-semibold text-green-700 mb-3">💰 Earnings</h3>
+          <ul className="space-y-1 text-gray-700 text-sm">
+            <li>Basic Salary: <span className="font-medium">Rs {basicSalary?.toLocaleString()}</span></li>
             <li>
-              Overtime — Hours: {overtime?.hours || 0}, Days: {overtime?.days || 0}, Pay: Rs{" "}
-              {overtime?.pay?.toLocaleString() || 0}
+              Overtime — Hours: {overtime?.hours || 0}, Days: {overtime?.days || 0}, Pay:{" "}
+              <span className="font-medium">Rs {overtime?.pay?.toLocaleString() || 0}</span>
             </li>
             <li>
-              Bonus — Rate: {bonus?.rate || 0}%, Amount: Rs {bonus?.amount?.toLocaleString() || 0}
+              Bonus — Rate: {bonus?.rate || 0}%, Amount:{" "}
+              <span className="font-medium">Rs {bonus?.amount?.toLocaleString() || 0}</span>
             </li>
             {allowances && allowances.length > 0 ? (
               allowances.map((a, index) => (
                 <li key={index}>
-                  {a.name}: Rs {a.amount?.toLocaleString()}
+                  {a.name}: <span className="font-medium">Rs {a.amount?.toLocaleString()}</span>
                 </li>
               ))
             ) : (
@@ -80,26 +83,32 @@ function Salary({ sal }) {
         </div>
 
         {/* Deductions */}
-        <div className="flex-1">
-          <h3 className="font-bold text-red-700 mb-2">Deductions</h3>
-          <ul className="space-y-1 text-gray-700">
-            <li>No Pay: Rs {deductions?.noPay?.toLocaleString() || 0}</li>
-            <li>EPF: Rs {deductions?.epf?.toLocaleString() || 0}</li>
-            <li>APIT: Rs {deductions?.apit?.toLocaleString() || 0}</li>
-            <li>Other: Rs {deductions?.other?.toLocaleString() || 0}</li>
+        <div className="flex-1 bg-gray-50 rounded-lg p-4 border border-gray-100">
+          <h3 className="font-semibold text-red-700 mb-3">📉 Deductions</h3>
+          <ul className="space-y-1 text-gray-700 text-sm">
+            <li>No Pay: <span className="font-medium">Rs {deductions?.noPay?.toLocaleString() || 0}</span></li>
+            <li>EPF: <span className="font-medium">Rs {deductions?.epf?.toLocaleString() || 0}</span></li>
+            <li>APIT: <span className="font-medium">Rs {deductions?.apit?.toLocaleString() || 0}</span></li>
+            <li>Other: <span className="font-medium">Rs {deductions?.other?.toLocaleString() || 0}</span></li>
           </ul>
         </div>
       </div>
 
       {/* Totals */}
-      <div className="border-t pt-3 mb-4">
-        <p className="font-semibold text-gray-800">
-          Total Allowances: Rs {totals?.totalAllowances?.toLocaleString() || 0}
+      <div className="border-t border-gray-200 pt-4 mb-5">
+        <p className="font-medium text-gray-800">
+          Total Allowances:{" "}
+          <span className="font-semibold text-green-700">
+            Rs {totals?.totalAllowances?.toLocaleString() || 0}
+          </span>
         </p>
-        <p className="font-semibold text-gray-800">
-          Total Deductions: Rs {totals?.totalDeductions?.toLocaleString() || 0}
+        <p className="font-medium text-gray-800">
+          Total Deductions:{" "}
+          <span className="font-semibold text-red-700">
+            Rs {totals?.totalDeductions?.toLocaleString() || 0}
+          </span>
         </p>
-        <p className="text-lg font-bold text-[#1B5E20] mt-2">
+        <p className="text-lg font-bold text-green-800 mt-3">
           Net Salary: Rs {totals?.netSalary?.toLocaleString() || 0}
         </p>
       </div>
@@ -108,19 +117,19 @@ function Salary({ sal }) {
       <div className="flex flex-wrap justify-end gap-3 mt-auto">
         <Link
           to={`/Paydetails/${_id}`}
-          className="px-4 py-2 rounded-md bg-[#4CAF50] text-white hover:bg-[#388E3C] transition"
+          className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-sm transition"
         >
           Update
         </Link>
         <button
           onClick={deleteHandler}
-          className="px-4 py-2 rounded-md bg-[#E53935] text-white hover:bg-[#B71C1C] transition"
+          className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 shadow-sm transition"
         >
           Delete
         </button>
         <Link
           to={`/salarySlip/${_id}`}
-          className="px-4 py-2 rounded-md bg-[#2196F3] text-white hover:bg-[#1565C0] transition"
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
         >
           View Slip
         </Link>

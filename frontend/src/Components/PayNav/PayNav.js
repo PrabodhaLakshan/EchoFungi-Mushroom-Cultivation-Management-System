@@ -6,7 +6,7 @@ function PayNav() {
   const location = useLocation(); // for active link highlight
 
   const menuItems = [
-     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/dashboard" },
+     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/finance_manager-dashboard" },
     { icon: <FaUser />, label: "Employees", path: "/employee" },
     { icon: <FaInfoCircle />, label: "Employee Details", path: "/employeedetails" },
     { icon: <FaPlusCircle />, label: "Add Salary", path: "/payroll" },

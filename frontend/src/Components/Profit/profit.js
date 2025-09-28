@@ -133,7 +133,7 @@ function ProfitLoss() {
             <Link
               to="/freport"
               state={{ month: Number(month), year: Number(year) }}
-              className="mt-6 inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 shadow transition text-center"
+              className="mt-6 inline-block px-6 py-3 bg-green-400 text-white font-semibold rounded-lg hover:bg-green-700 shadow transition text-center"
             >
               View Detailed Report
             </Link>
