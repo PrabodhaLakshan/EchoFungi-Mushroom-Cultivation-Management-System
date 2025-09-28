@@ -12,7 +12,7 @@ function MainIntNavNav() {
   const location = useLocation(); // for active link highlight
 
   const menuItems = [
-    { icon: <FaTachometerAlt />, label: "Dashboard", path: "/dashboard" },
+    { icon: <FaTachometerAlt />, label: "Dashboard", path: "/Inventory_Manager-dashboard" },
     { icon: <FaBoxOpen />, label: "Inventory Item", path: "/itemdetails" },
     { icon: <FaTruck />, label: "Supplier", path: "/supplierdetails" },
     { icon: <FaShoppingCart />, label: "Purchases", path: "/purchasedetails" },

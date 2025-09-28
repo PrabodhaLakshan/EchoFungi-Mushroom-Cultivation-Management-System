@@ -12,7 +12,7 @@ function SupplyNav() {
       <ul className="list-none p-0 m-0">
         <li className="flex items-center px-5 py-3 hover:bg-green-600 transition gap-2">
           <FaTachometerAlt />
-          <Link to="/dashboard" className="no-underline text-inherit w-full flex items-center">
+          <Link to="/Inventory_Manager-dashboard" className="no-underline text-inherit w-full flex items-center">
             Dashboard
           </Link>
         </li>

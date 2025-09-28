@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import InventoryNav from "../InventoryNav/InventoryNav";
 import axios from "axios";
 import ItemDetails from "../ItemDetails/ItemDetails";
-import { FaBoxes } from "react-icons/fa";
+
 
 const URL = "http://localhost:5000/items";
 
@@ -94,12 +94,10 @@ function Items() {
       {/* Main Content */}
       <div className="flex-1 ml-52 p-8 overflow-y-auto">
         {/* Page Header */}
-       <div className="flex justify-center items-center gap-3 my-6">
-                 <FaBoxes className="text-green-600 text-3xl" />
-                 <h1 className="text-3xl font-bold text-center">Inventory Details</h1>
-               </div>
-          
-       
+        <div className="flex justify-center items-center gap-3 my-6">
+         
+          <h1 className="text-3xl font-bold text-center">Inventory Details</h1>
+        </div>
 
         {/* Search & Filters */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">

@@ -19,9 +19,9 @@ function InventoryNav() {
       <ul className="flex-1 mt-4 space-y-2 px-1">
         <li>
           <Link
-            to="/dashboard"
+            to="/Inventory_Manager-dashboard"
             className={`flex items-center gap-3 px-6 py-3 rounded transition-colors ${isActive(
-              "/dashboard"
+              "/Inventory_Manager-dashboard"
             )}`}
           >
             <FaTachometerAlt />
