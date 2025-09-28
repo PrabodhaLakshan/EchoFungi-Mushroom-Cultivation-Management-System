@@ -36,14 +36,22 @@ function AddInventory() {
     fetchPurchases();
   }, []);
 
+  // ✅ Handle input change with real-time error clearing
   const handleChange = (e) => {
     const { name, value } = e.target;
     setInputs((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // Clear the error for the specific field
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: "",
+    }));
   };
 
+  // ✅ Form validation
   const validate = () => {
     const newErrors = {};
 
@@ -55,14 +63,13 @@ function AddInventory() {
       newErrors.Item_name = "Item name must be at least 2 characters.";
     }
 
-   if (inputs.Quantity === "") {
-  newErrors.Quantity = "Quantity is required.";
-} else if (Number(inputs.Quantity) < 0) {
-  newErrors.Quantity = "Quantity cannot be negative.";
-} else if (Number(inputs.Quantity) > 50) {
-  newErrors.Quantity = "Quantity cannot exceed 50.";
-}
-
+    if (inputs.Quantity === "") {
+      newErrors.Quantity = "Quantity is required.";
+    } else if (Number(inputs.Quantity) < 0) {
+      newErrors.Quantity = "Quantity cannot be negative.";
+    } else if (Number(inputs.Quantity) > 100) {
+      newErrors.Quantity = "Quantity cannot exceed 50.";
+    }
 
     if (!inputs.Unit?.trim()) newErrors.Unit = "Unit is required.";
 
@@ -73,15 +80,13 @@ function AddInventory() {
     }
 
     if (inputs.Expired_date) {
-  // Only validate if Expired_date is entered
-  if (
-    inputs.Received_date &&
-    new Date(inputs.Expired_date) < new Date(inputs.Received_date)
-  ) {
-    newErrors.Expired_date = "Expired date cannot be before received date.";
-  }
-}
-
+      if (
+        inputs.Received_date &&
+        new Date(inputs.Expired_date) < new Date(inputs.Received_date)
+      ) {
+        newErrors.Expired_date = "Expired date cannot be before received date.";
+      }
+    }
 
     if (inputs.Reorder_level === "") {
       newErrors.Reorder_level = "Reorder level is required.";
@@ -89,14 +94,15 @@ function AddInventory() {
       newErrors.Reorder_level = "Reorder level cannot be negative.";
     }
 
-    //if (!inputs.Description?.trim()) newErrors.Description = "Description is required.";
-
-    if (!inputs.Purchase_id) newErrors.Purchase_id = "Purchase ID is required.";
+    if (!inputs.Purchase_id) {
+      newErrors.Purchase_id = "Purchase ID is required.";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -108,7 +114,7 @@ function AddInventory() {
         Quantity: Number(inputs.Quantity),
         Unit: String(inputs.Unit),
         Received_date: new Date(inputs.Received_date),
-        Expired_date: new Date(inputs.Expired_date),
+        Expired_date: inputs.Expired_date ? new Date(inputs.Expired_date) : null,
         Reorder_level: Number(inputs.Reorder_level),
         Description: String(inputs.Description),
         Purchase_id: String(inputs.Purchase_id),
@@ -118,9 +124,7 @@ function AddInventory() {
       const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
       setInputs((prev) => ({ ...prev, Item_code: formattedCode }));
 
-      // Show success alert
       alert("✅ Item added successfully!");
-
       navigate("/itemdetails");
     } catch (err) {
       console.error("Error adding item:", err);
@@ -140,6 +144,7 @@ function AddInventory() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
 
+            {/* Item Code */}
             <div>
               <label className="block font-medium text-gray-700">Item Code</label>
               <input
@@ -151,6 +156,7 @@ function AddInventory() {
               />
             </div>
 
+            {/* Category */}
             <div>
               <label className="block font-medium text-gray-700">Category</label>
               <select
@@ -168,6 +174,7 @@ function AddInventory() {
               {errors.Category && <p className="text-red-500 text-sm mt-1">{errors.Category}</p>}
             </div>
 
+            {/* Item Name */}
             <div>
               <label className="block font-medium text-gray-700">Item Name</label>
               <input
@@ -180,6 +187,7 @@ function AddInventory() {
               {errors.Item_name && <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>}
             </div>
 
+            {/* Quantity */}
             <div>
               <label className="block font-medium text-gray-700">Quantity</label>
               <input
@@ -192,6 +200,7 @@ function AddInventory() {
               {errors.Quantity && <p className="text-red-500 text-sm mt-1">{errors.Quantity}</p>}
             </div>
 
+            {/* Unit */}
             <div>
               <label className="block font-medium text-gray-700">Unit</label>
               <input
@@ -204,6 +213,7 @@ function AddInventory() {
               {errors.Unit && <p className="text-red-500 text-sm mt-1">{errors.Unit}</p>}
             </div>
 
+            {/* Received Date */}
             <div>
               <label className="block font-medium text-gray-700">Received Date</label>
               <input
@@ -216,6 +226,7 @@ function AddInventory() {
               {errors.Received_date && <p className="text-red-500 text-sm mt-1">{errors.Received_date}</p>}
             </div>
 
+            {/* Expired Date */}
             <div>
               <label className="block font-medium text-gray-700">Expired Date</label>
               <input
@@ -228,6 +239,7 @@ function AddInventory() {
               {errors.Expired_date && <p className="text-red-500 text-sm mt-1">{errors.Expired_date}</p>}
             </div>
 
+            {/* Reorder Level */}
             <div>
               <label className="block font-medium text-gray-700">Reorder Level</label>
               <input
@@ -240,6 +252,7 @@ function AddInventory() {
               {errors.Reorder_level && <p className="text-red-500 text-sm mt-1">{errors.Reorder_level}</p>}
             </div>
 
+            {/* Description */}
             <div>
               <label className="block font-medium text-gray-700">Description</label>
               <textarea
@@ -249,9 +262,9 @@ function AddInventory() {
                 rows="3"
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
               ></textarea>
-              
             </div>
 
+            {/* Purchase ID */}
             <div>
               <label className="block font-medium text-gray-700">Purchase ID</label>
               <select
@@ -271,6 +284,7 @@ function AddInventory() {
               {errors.Purchase_id && <p className="text-red-500 text-sm mt-1">{errors.Purchase_id}</p>}
             </div>
 
+            {/* Submit Button */}
             <div className="text-center">
               <button
                 type="submit"

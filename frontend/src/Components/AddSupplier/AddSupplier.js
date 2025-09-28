@@ -16,20 +16,26 @@ function AddSupplier() {
 
   const [errors, setErrors] = useState({});
 
+  // ✅ Handle input change with live error clearing
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Only allow digits in Phone_number
+    if (name === "Phone_number" && !/^\d*$/.test(value)) return;
 
     setInputs((prev) => ({
       ...prev,
       [name]: value,
     }));
 
-    // Live validation for phone number
-    if (name === "Phone_number") {
-      if (!/^\d*$/.test(value)) return; // Allow only digits
-    }
+    // Clear error as the user corrects input
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   };
 
+  // ✅ Validate all fields on submit
   const validate = () => {
     const newErrors = {};
 
@@ -41,11 +47,11 @@ function AddSupplier() {
     }
 
     // Phone Number
-   const phone = inputs.Phone_number?.toString().trim();
-if (!/^0\d{9}$/.test(phone)) {
-  newErrors.Phone_number = "Phone number must start with 0 and be exactly 10 digits.";
-}
-
+    const phone = inputs.Phone_number?.toString().trim();
+    if (!/^0\d{9}$/.test(phone)) {
+      newErrors.Phone_number =
+        "Phone number must start with 0 and be exactly 10 digits.";
+    }
 
     // Email
     if (!inputs.Email.trim()) {
@@ -67,32 +73,30 @@ if (!/^0\d{9}$/.test(phone)) {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  // ✅ Submit data
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validate()) return;
+    if (!validate()) return;
 
-  try {
-    const res = await axios.post("http://localhost:5000/suppliers", {
-      Supplier_name: inputs.Supplier_name,
-      Phone_number: inputs.Phone_number,
-      Email: inputs.Email,
-      Address: inputs.Address,
-    });
+    try {
+      const res = await axios.post("http://localhost:5000/suppliers", {
+        Supplier_name: inputs.Supplier_name,
+        Phone_number: inputs.Phone_number,
+        Email: inputs.Email,
+        Address: inputs.Address,
+      });
 
-    const codeNumber = res.data.Supplier_id;
-    const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
-    setInputs((prev) => ({ ...prev, Supplier_id: formattedCode }));
+      const codeNumber = res.data.Supplier_id;
+      const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
+      setInputs((prev) => ({ ...prev, Supplier_id: formattedCode }));
 
-    // ✅ Show success alert
-    window.alert("✅ Add Supplier Details Successful!");
-
-    navigate("/supplierdetails");
-  } catch (err) {
-    console.error("Error adding supplier:", err);
-  }
-};
-
+      window.alert("✅ Add Supplier Details Successful!");
+      navigate("/supplierdetails");
+    } catch (err) {
+      console.error("Error adding supplier:", err);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -106,7 +110,9 @@ if (!/^0\d{9}$/.test(phone)) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Supplier ID */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Supplier ID</label>
+              <label className="block text-gray-600 font-medium mb-1">
+                Supplier ID
+              </label>
               <input
                 type="text"
                 name="Supplier_id"
@@ -118,7 +124,9 @@ if (!/^0\d{9}$/.test(phone)) {
 
             {/* Supplier Name */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Supplier Name</label>
+              <label className="block text-gray-600 font-medium mb-1">
+                Supplier Name
+              </label>
               <input
                 type="text"
                 name="Supplier_name"
@@ -128,13 +136,17 @@ if (!/^0\d{9}$/.test(phone)) {
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               />
               {errors.Supplier_name && (
-                <p className="text-red-500 text-sm mt-1">{errors.Supplier_name}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.Supplier_name}
+                </p>
               )}
             </div>
 
             {/* Phone Number */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Phone Number</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Phone Number
+              </label>
               <input
                 type="text"
                 name="Phone_number"
@@ -149,13 +161,17 @@ if (!/^0\d{9}$/.test(phone)) {
                 }`}
               />
               {errors.Phone_number && (
-                <p className="text-red-500 text-sm mt-1">{errors.Phone_number}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.Phone_number}
+                </p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Email</label>
+              <label className="block text-gray-600 font-medium mb-1">
+                Email
+              </label>
               <input
                 type="email"
                 name="Email"
@@ -171,7 +187,9 @@ if (!/^0\d{9}$/.test(phone)) {
 
             {/* Address */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Address</label>
+              <label className="block text-gray-600 font-medium mb-1">
+                Address
+              </label>
               <textarea
                 name="Address"
                 value={inputs.Address}

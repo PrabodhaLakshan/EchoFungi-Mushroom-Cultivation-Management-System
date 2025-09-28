@@ -18,7 +18,7 @@ function AddPurchase() {
   const [serverErrors, setServerErrors] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
-  // Fetch suppliers
+  // ✅ Fetch suppliers
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
@@ -36,20 +36,28 @@ function AddPurchase() {
     fetchSuppliers();
   }, []);
 
-  // Handle change
+  // ✅ Handle input change with real-time error clearing
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setInputs((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: "",
+    }));
   };
 
-  // Validate form
+  // ✅ Form validation
   const validate = () => {
     const newErrors = {};
 
-    
+    if (!inputs.Supplier_id) {
+      newErrors.Supplier_id = "Supplier is required.";
+    }
 
     if (!inputs.Item_name.trim()) {
       newErrors.Item_name = "Item name is required.";
@@ -63,52 +71,48 @@ function AddPurchase() {
       newErrors.Purchase_date = "Purchase date cannot be in the future.";
     }
 
-   if (inputs.Price === "") {
-  newErrors.Price = "Price is required.";
-} else {
-  
-  const priceRegex = /^\d+(\.\d{1,2})?$/;
-  if (!priceRegex.test(inputs.Price)) {
-    newErrors.Price = "Price must be a valid non-negative number with up to 2 decimal places.";
-  }
-}
-
+    if (inputs.Price === "") {
+      newErrors.Price = "Price is required.";
+    } else {
+      const priceRegex = /^\d+(\.\d{1,2})?$/;
+      if (!priceRegex.test(inputs.Price)) {
+        newErrors.Price = "Price must be a valid number with up to 2 decimal places.";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle submit
+  // ✅ Submit form
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setServerErrors([]);
+    e.preventDefault();
+    setServerErrors([]);
 
-  if (!validate()) return;
+    if (!validate()) return;
 
-  try {
-    const res = await axios.post("http://localhost:5000/purchases", {
-      Supplier_id: inputs.Supplier_id,
-      Item_name: inputs.Item_name,
-      Purchase_date: new Date(inputs.Purchase_date),
-      Price: Number(inputs.Price),
-    });
+    try {
+      const res = await axios.post("http://localhost:5000/purchases", {
+        Supplier_id: inputs.Supplier_id,
+        Item_name: inputs.Item_name,
+        Purchase_date: new Date(inputs.Purchase_date),
+        Price: Number(inputs.Price),
+      });
 
-    const codeNumber = res.data.Purchase_id;
-    const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
-    setInputs((prev) => ({ ...prev, Purchase_id: formattedCode }));
+      const codeNumber = res.data.Purchase_id;
+      const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
+      setInputs((prev) => ({ ...prev, Purchase_id: formattedCode }));
 
-    // ✅ Show success alert
-    window.alert("✅ Add Purchase Details Successful!");
-
-    navigate("/purchasedetails");
-  } catch (err) {
-    if (err.response?.data?.errors) {
-      setServerErrors(err.response.data.errors);
-    } else {
-      console.error("Error adding item:", err);
+      alert("✅ Add Purchase Details Successful!");
+      navigate("/purchasedetails");
+    } catch (err) {
+      if (err.response?.data?.errors) {
+        setServerErrors(err.response.data.errors);
+      } else {
+        console.error("Error adding purchase:", err);
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -120,7 +124,7 @@ function AddPurchase() {
             Add Purchase
           </h1>
 
-          {/* Server-side validation errors */}
+          {/* ✅ Server-side validation errors */}
           {serverErrors.length > 0 && (
             <div className="mb-4 text-red-600">
               <ul className="list-disc ml-5">
@@ -160,7 +164,7 @@ function AddPurchase() {
                   </option>
                 ))}
               </select>
-              {errors.Supplier_id && <p className="text-red-500 text-sm">{errors.Supplier_id}</p>}
+              {errors.Supplier_id && <p className="text-red-500 text-sm mt-1">{errors.Supplier_id}</p>}
             </div>
 
             {/* Item Name */}
@@ -173,7 +177,7 @@ function AddPurchase() {
                 onChange={handleChange}
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
               />
-              {errors.Item_name && <p className="text-red-500 text-sm">{errors.Item_name}</p>}
+              {errors.Item_name && <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>}
             </div>
 
             {/* Purchase Date */}
@@ -186,7 +190,7 @@ function AddPurchase() {
                 onChange={handleChange}
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
               />
-              {errors.Purchase_date && <p className="text-red-500 text-sm">{errors.Purchase_date}</p>}
+              {errors.Purchase_date && <p className="text-red-500 text-sm mt-1">{errors.Purchase_date}</p>}
             </div>
 
             {/* Price */}
@@ -197,15 +201,17 @@ function AddPurchase() {
                 name="Price"
                 value={inputs.Price}
                 onChange={handleChange}
+                step="0.01"
                 className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
               />
-              {errors.Price && <p className="text-red-500 text-sm">{errors.Price}</p>}
+              {errors.Price && <p className="text-red-500 text-sm mt-1">{errors.Price}</p>}
             </div>
 
+            {/* Submit Button */}
             <div className="text-center">
               <button
                 type="submit"
-                className="mt-4 px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-200"
+                className="mt-4 w-full px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition duration-200"
               >
                 Submit
               </button>
