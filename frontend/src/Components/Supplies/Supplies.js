@@ -41,7 +41,8 @@ function Supplies() {
     } else {
       const filtered = originalSuppliers.filter(
         (supplier) =>
-          supplier.Supplier_id?.toString().toLowerCase() === trimmedQuery.toLowerCase()
+          supplier.Supplier_id?.toString().toLowerCase() ===
+          trimmedQuery.toLowerCase()
       );
 
       setSuppliers(filtered);
@@ -64,35 +65,43 @@ function Supplies() {
 
       {/* Main content */}
       <div className="ml-[200px] p-6 w-full">
-        <div className="flex justify-center items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <FaTruck /> Suppliers Details
+        {/* Header Card */}
+        <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md rounded-2xl p-6 mb-6 flex flex-col md:flex-row justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <FaTruck className="text-green-700" /> Suppliers Details
           </h1>
+          <div className="bg-white shadow rounded-xl px-4 py-2 text-center mt-4 md:mt-0">
+            <p className="text-gray-500 text-sm font-semibold">TOTAL SUPPLIERS</p>
+            <p className="text-2xl font-bold text-gray-800">{suppliers.length}</p>
+          </div>
         </div>
 
         {/* Search bar */}
-        <div className="flex gap-2 mb-6">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by Supplier ID..."
-            className="border border-gray-800 px-4 py-2 rounded-md w-full max-w-md"
-          />
-        </div>
+        <div className="flex flex-col md:flex-row gap-3 mb-6 justify-between items-center">
+  <input
+    type="text"
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    placeholder="🔎 Search by Purchase ID..."
+    className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
+  />
+</div>
+
 
         {/* Show message if no results */}
         {noResults && (
-          <p className="text-red-500 font-bold mb-4">No results found</p>
+          <p className="text-red-500 font-bold mb-4 text-center">
+            ❌ No suppliers found
+          </p>
         )}
 
         {/* Table with supplier details */}
         <div
           ref={tableRef}
-          className="overflow-x-auto bg-white rounded-lg shadow-lg border border-gray-300"
+          className="overflow-x-auto bg-white rounded-xl shadow-lg border"
         >
           <table className="w-full border-collapse">
-            <thead className="bg-[#A8BBA3] text-gray-900">
+            <thead className="bg-green-900 text-white">
               <tr>
                 <th className="px-4 py-3 text-left border-b border-gray-300">
                   Supplier ID

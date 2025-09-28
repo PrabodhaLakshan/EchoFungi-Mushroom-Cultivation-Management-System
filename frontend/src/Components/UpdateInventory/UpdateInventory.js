@@ -10,6 +10,7 @@ function UpdateInventory() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  // Fetch item details
   useEffect(() => {
     const fetchHandler = async () => {
       try {
@@ -24,6 +25,7 @@ function UpdateInventory() {
     fetchHandler();
   }, [id]);
 
+  // Fetch purchase IDs
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
@@ -38,6 +40,7 @@ function UpdateInventory() {
     fetchPurchases();
   }, []);
 
+  // Validation logic
   const validate = () => {
     const newErrors = {};
 
@@ -49,15 +52,13 @@ function UpdateInventory() {
       newErrors.Item_name = "Item name must be at least 2 characters.";
     }
 
-    
-   if (inputs.Quantity === "") {
-  newErrors.Quantity = "Quantity is required.";
-} else if (Number(inputs.Quantity) < 0) {
-  newErrors.Quantity = "Quantity cannot be negative.";
-} else if (Number(inputs.Quantity) > 50) {
-  newErrors.Quantity = "Quantity cannot exceed 50.";
-}
-
+    if (inputs.Quantity === "" || inputs.Quantity === undefined) {
+      newErrors.Quantity = "Quantity is required.";
+    } else if (Number(inputs.Quantity) < 0) {
+      newErrors.Quantity = "Quantity cannot be negative.";
+    } else if (Number(inputs.Quantity) > 50) {
+      newErrors.Quantity = "Quantity cannot exceed 50.";
+    }
 
     if (!inputs.Unit?.trim()) newErrors.Unit = "Unit is required.";
 
@@ -67,30 +68,29 @@ function UpdateInventory() {
       newErrors.Received_date = "Received date cannot be in the future.";
     }
 
-   if (inputs.Expired_date) {
-  // Only validate if Expired_date is entered
-  if (
-    inputs.Received_date &&
-    new Date(inputs.Expired_date) < new Date(inputs.Received_date)
-  ) {
-    newErrors.Expired_date = "Expired date cannot be before received date.";
-  }
-}
+    if (inputs.Expired_date) {
+      if (
+        inputs.Received_date &&
+        new Date(inputs.Expired_date) < new Date(inputs.Received_date)
+      ) {
+        newErrors.Expired_date = "Expired date cannot be before received date.";
+      }
+    }
 
-    if (inputs.Reorder_level === "") {
+    if (inputs.Reorder_level === "" || inputs.Reorder_level === undefined) {
       newErrors.Reorder_level = "Reorder level is required.";
     } else if (Number(inputs.Reorder_level) < 0) {
       newErrors.Reorder_level = "Reorder level cannot be negative.";
     }
 
-    
-
     if (!inputs.Purchase_id) newErrors.Purchase_id = "Purchase ID is required.";
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
+  // Update item
   const sendRequest = async () => {
     try {
       await axios.put(`http://localhost:5000/items/${id}`, {
@@ -105,7 +105,6 @@ function UpdateInventory() {
         Description: inputs.Description,
         Purchase_id: inputs.Purchase_id,
       });
-      // Show success alert
       alert("✅ Inventory item updated successfully!");
       navigate("/itemdetails");
     } catch (err) {
@@ -116,21 +115,13 @@ function UpdateInventory() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setInputs((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
+    setInputs((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" })); // clear error on change
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) {
-      sendRequest();
-    }
+    if (validate()) sendRequest();
   };
 
   return (
@@ -143,6 +134,7 @@ function UpdateInventory() {
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Item Code */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Item Code</label>
               <input
@@ -154,6 +146,7 @@ function UpdateInventory() {
               />
             </div>
 
+            {/* Category */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Category</label>
               <select
@@ -171,6 +164,7 @@ function UpdateInventory() {
               {errors.Category && <p className="text-red-500 text-sm">{errors.Category}</p>}
             </div>
 
+            {/* Item Name */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Item Name</label>
               <input
@@ -183,6 +177,7 @@ function UpdateInventory() {
               {errors.Item_name && <p className="text-red-500 text-sm">{errors.Item_name}</p>}
             </div>
 
+            {/* Quantity */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Quantity</label>
               <input
@@ -195,6 +190,7 @@ function UpdateInventory() {
               {errors.Quantity && <p className="text-red-500 text-sm">{errors.Quantity}</p>}
             </div>
 
+            {/* Unit */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Unit</label>
               <input
@@ -207,6 +203,7 @@ function UpdateInventory() {
               {errors.Unit && <p className="text-red-500 text-sm">{errors.Unit}</p>}
             </div>
 
+            {/* Received Date */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Received Date</label>
               <input
@@ -219,6 +216,7 @@ function UpdateInventory() {
               {errors.Received_date && <p className="text-red-500 text-sm">{errors.Received_date}</p>}
             </div>
 
+            {/* Expired Date */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Expired Date</label>
               <input
@@ -228,8 +226,10 @@ function UpdateInventory() {
                 onChange={handleChange}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               />
+              {errors.Expired_date && <p className="text-red-500 text-sm">{errors.Expired_date}</p>}
             </div>
 
+            {/* Reorder Level */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Reorder Level</label>
               <input
@@ -242,6 +242,7 @@ function UpdateInventory() {
               {errors.Reorder_level && <p className="text-red-500 text-sm">{errors.Reorder_level}</p>}
             </div>
 
+            {/* Description */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Description</label>
               <textarea
@@ -252,6 +253,7 @@ function UpdateInventory() {
               />
             </div>
 
+            {/* Purchase ID */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Purchase ID</label>
               <select
@@ -270,6 +272,7 @@ function UpdateInventory() {
               {errors.Purchase_id && <p className="text-red-500 text-sm">{errors.Purchase_id}</p>}
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition duration-200"

@@ -42,10 +42,9 @@ function Purchases() {
     fetchPurchases();
   }, []);
 
-  // 🔍 Auto search logic
+  // Auto search logic
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
-
     if (trimmedQuery === "") {
       setPurchases(originalPurchases);
       setNoResults(false);
@@ -90,7 +89,7 @@ function Purchases() {
 
     axios
       .put(`${URL}/${id}`, updatedPurchase)
-      .then((res) => {
+      .then(() => {
         setPurchases((prev) =>
           prev.map((p) => (p._id === id ? { ...p, ...updatedPurchase } : p))
         );
@@ -145,40 +144,51 @@ function Purchases() {
 
       {/* Main Content */}
       <div className="ml-[200px] p-6 w-full">
-        {/* Header */}
-        <div className="flex justify-center items-center gap-3 my-6">
-          <FaShoppingCart className="text-green-600 text-3xl" />
-          <h1 className="text-3xl font-bold text-center">Purchase Details</h1>
+        {/* Header Section */}
+        <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col md:flex-row justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <FaShoppingCart className="text-green-700 text-4xl" />
+            <h1 className="text-3xl font-bold text-gray-800">Purchased Items</h1>
+          </div>
+          {/* Total Purchases Card */}
+          <div className="bg-gray-100 shadow px-6 py-3 rounded-xl text-center mt-4 md:mt-0">
+            <p className="text-xl font-bold text-gray-700">{purchases.length}</p>
+            <p className="text-gray-500 text-sm">TOTAL PURCHASES</p>
+          </div>
         </div>
 
-        {/* Search (without button) */}
-        <div className="flex gap-2 mb-6">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by Purchase ID..."
-            className="border border-gray-800 px-4 py-2 rounded-md w-full max-w-md"
-          />
-        </div>
+        {/* Search Bar (no button) */}
+        {/* Search bar */}
+<div className="bg-white rounded-2xl shadow-md p-4 mb-6">
+  <div className="flex flex-col md:flex-row gap-3 justify-between items-center">
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder="🔎 Search by Purchase ID..."
+      className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
+    />
+  </div>
+</div>
+
 
         {noResults && (
-          <div className="text-red-500 font-medium mb-4">
+          <div className="text-red-500 font-medium mb-4 text-center">
             No matching purchases found.
           </div>
         )}
 
-        {/* Purchases Table */}
-        <div className="overflow-x-auto bg-white rounded-lg shadow-lg border border-gray-300">
+        {/* Table */}
+        <div className="overflow-x-auto bg-white rounded-2xl shadow-lg border border-gray-200">
           <table className="w-full border-collapse">
-            <thead className="bg-[#A8BBA3] text-gray-900">
+            <thead className="bg-green-900 text-white">
               <tr>
-                <th className="px-4 py-2 text-left">Purchase ID</th>
-                <th className="px-4 py-2 text-left">Supplier ID</th>
-                <th className="px-4 py-2 text-left">Item Name</th>
-                <th className="px-4 py-2 text-left">Purchase Date</th>
-                <th className="px-4 py-2 text-left">Price</th>
-                <th className="px-4 py-2 text-left">Action</th>
+                <th className="px-4 py-3 text-left">Purchase ID</th>
+                <th className="px-4 py-3 text-left">Supplier ID</th>
+                <th className="px-4 py-3 text-left">Item Name</th>
+                <th className="px-4 py-3 text-left">Purchase Date</th>
+                <th className="px-4 py-3 text-left">Price</th>
+                <th className="px-4 py-3 text-left">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -207,24 +217,19 @@ function Purchases() {
           </table>
         </div>
 
-        
-        <div className="w-full flex justify-center">
-          
-               {purchases.length > 0 && searchQuery.trim() === "" && (
-               <div className="w-full flex justify-center mt-12">
-               <div className="bg-white border border-gray-300 rounded-lg shadow-md p-6 w-[650px]">
-                <h2 className="text-xl font-bold mb-4 text-center text-green-700">
-                  📊 Monthly Purchase Cost
-               </h2>
+        {/* Monthly Cost Chart */}
+        {purchases.length > 0 && searchQuery.trim() === "" && (
+          <div className="w-full flex justify-center mt-12">
+            <div className="bg-white border border-gray-300 rounded-2xl shadow-md p-6 w-[650px]">
+              <h2 className="text-xl font-bold mb-4 text-center text-green-700">
+                📊 Monthly Purchase Cost
+              </h2>
               <div style={{ height: "300px" }}>
-             <Bar data={getMonthlyCostData()} options={barOptions} />
-      </div>
-    </div>
-  </div>
-)}
-
-
-        </div>
+                <Bar data={getMonthlyCostData()} options={barOptions} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

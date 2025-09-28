@@ -10,6 +10,7 @@ function IntReport() {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
 
   const today = new Date();
   const nextWeek = new Date();
@@ -18,7 +19,7 @@ function IntReport() {
   useEffect(() => {
     axios.get(URL).then((res) => {
       setItems(res.data.items);
-      setFilteredItems(res.data.items); // initialize filtered list
+      setFilteredItems(res.data.items);
     });
   }, []);
 
@@ -28,18 +29,32 @@ function IntReport() {
     return d.toLocaleDateString();
   };
 
-  // Auto-filter as user types
+
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredItems(items);
-      return;
+    let result = [...items];
+
+    
+    if (selectedMonth) {
+      const [year, month] = selectedMonth.split("-");
+      result = result.filter((item) => {
+        const date = new Date(item.Received_date);
+        return (
+          date.getFullYear() === parseInt(year) &&
+          date.getMonth() + 1 === parseInt(month)
+        );
+      });
     }
-    const filtered = items.filter(
-      (item) =>
-        item.Item_code.toString().toLowerCase() === searchQuery.toLowerCase()
-    );
-    setFilteredItems(filtered);
-  }, [searchQuery, items]);
+
+    
+    if (searchQuery.trim()) {
+      result = result.filter((item) =>
+        item.Item_code &&
+        item.Item_code.toString().toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredItems(result);
+  }, [selectedMonth, searchQuery, items]);
 
   const lowStockItems = filteredItems.filter(
     (item) => item.Quantity < item.Reorder_level
@@ -56,7 +71,7 @@ function IntReport() {
     const canvas = await html2canvas(element, {
       scale: 2,
       scrollY: -window.scrollY,
-      useCORS: true
+      useCORS: true,
     });
 
     const imgData = canvas.toDataURL("image/png");
@@ -81,7 +96,7 @@ function IntReport() {
       heightLeft -= pageHeight;
     }
 
-    pdf.save(`Inventory_Movement_Report.pdf`);
+    pdf.save("Inventory_Movement_Report.pdf");
   };
 
   return (
@@ -89,15 +104,23 @@ function IntReport() {
       <InventoryNav />
 
       <div className="ml-52 flex-1 p-6 space-y-8 overflow-auto">
-        {/* Search & Download */}
+        {/* Filters */}
         <div className="flex justify-between items-center">
-          <input
-            type="text"
-            placeholder="Search by Item Code..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 border rounded-md mr-2"
-          />
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="Search by Item Code..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2 border rounded-md"
+            />
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-4 py-2 border rounded-md"
+            />
+          </div>
 
           <button
             onClick={generatePDF}
@@ -113,8 +136,8 @@ function IntReport() {
           className="bg-white p-8 rounded-xl shadow-lg space-y-8 text-sm"
         >
           {/* Header */}
-          <div className="text-center space-y-1">
-            <h1 className="text-3xl font-bold text-green-800 tracking-widest uppercase">
+          <div className="text-center border-b pb-3">
+            <h1 className="text-3xl font-bold text-green-800 uppercase tracking-widest">
               Inventory Movement Report
             </h1>
             <p className="text-gray-600">Prepared by: EcoFungi Inventory System</p>
@@ -123,7 +146,9 @@ function IntReport() {
 
           {/* Inventory Overview */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">Inventory Overview</h2>
+            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
+              Inventory Overview
+            </h2>
             <div className="overflow-x-auto">
               <table className="min-w-full border border-green-300 text-left text-sm">
                 <thead className="bg-green-700 text-white">
@@ -158,9 +183,13 @@ function IntReport() {
 
           {/* Low Stock Items */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">Low Stock Items</h2>
+            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
+              Low Stock Items
+            </h2>
             {lowStockItems.length === 0 ? (
-              <p className="text-center text-gray-500 py-2">All items are above reorder level.</p>
+              <p className="text-center text-gray-500 py-2">
+                All items are above reorder level.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full border border-green-300 text-left text-sm">
@@ -188,9 +217,13 @@ function IntReport() {
 
           {/* Expiring Items */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">Expiring Items (Next 7 Days)</h2>
+            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
+              Expiring Items (Next 7 Days)
+            </h2>
             {expiringItems.length === 0 ? (
-              <p className="text-center text-gray-500 py-2">No items expiring in the next 7 days.</p>
+              <p className="text-center text-gray-500 py-2">
+                No items expiring in the next 7 days.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full border border-green-300 text-left text-sm">
@@ -218,7 +251,9 @@ function IntReport() {
 
           {/* Movement Summary */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">Movement Summary</h2>
+            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
+              Movement Summary
+            </h2>
             <div className="grid grid-cols-3 gap-4 mt-2">
               <div className="bg-green-100 p-4 rounded shadow text-center">
                 <p className="text-green-800">Total Stock Items</p>

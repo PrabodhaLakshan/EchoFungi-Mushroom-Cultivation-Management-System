@@ -4,9 +4,9 @@ import InventoryNav from "../InventoryNav/InventoryNav";
 import axios from "axios";
 import ItemDetails from "../ItemDetails/ItemDetails";
 
-
 const URL = "http://localhost:5000/items";
 
+// Fetch items from backend
 const fetchHandler = async () => {
   try {
     const res = await axios.get(URL);
@@ -26,6 +26,7 @@ function Items() {
 
   const navigate = useNavigate();
 
+  // Fetch data on component mount
   useEffect(() => {
     const getItems = async () => {
       const data = await fetchHandler();
@@ -38,7 +39,6 @@ function Items() {
       const lowStockItems = data.items.filter(
         (item) => item.Quantity < item.Reorder_level
       );
-
       if (lowStockItems.length > 0) {
         const message = lowStockItems
           .map(
@@ -53,7 +53,7 @@ function Items() {
     getItems();
   }, []);
 
-  // Search logic
+  // Search by Item Code
   useEffect(() => {
     const trimmed = searchQuery.trim().toLowerCase();
 
@@ -92,25 +92,37 @@ function Items() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-52 p-8 overflow-y-auto">
+      <div className="flex-1 ml-52 p-6 overflow-y-auto">
         {/* Page Header */}
-        <div className="flex justify-center items-center gap-3 my-6">
-         
-          <h1 className="text-3xl font-bold text-center">Inventory Details</h1>
+        <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md rounded-2xl p-6 mb-6 flex flex-col md:flex-row justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-800 text-center">
+            Inventory Item Details
+          </h1>
+          <div className="flex items-center gap-6 mt-4 md:mt-0">
+            <div className="bg-white shadow rounded-xl px-4 py-2 text-center">
+              <p className="text-gray-500 text-sm font-semibold">TOTAL ITEMS</p>
+              <p className="text-2xl font-bold text-gray-800">{items.length}</p>
+            </div>
+            <div className="bg-red-100 shadow rounded-xl px-4 py-2 text-center">
+              <p className="text-red-600 text-sm font-semibold">ROL ITEMS</p>
+              <p className="text-2xl font-bold text-red-600">
+                {lowStockItems.length}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Search & Filters */}
+        {/* Search & Filter */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <input
             type="text"
-            name="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="🔎 Search by Item Code..."
-            className="border border-gray-400 px-4 py-2 rounded-md w-full max-w-md shadow-sm"
+            className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
           />
           <select
-            className="border border-gray-400 px-3 py-2 rounded shadow-sm"
+            className="border border-gray-300 px-3 py-2 rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-green-300"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
@@ -122,32 +134,28 @@ function Items() {
           </select>
         </div>
 
-        {/* Main Table */}
-        <div className="mb-10 bg-white p-6 rounded-xl shadow-lg border">
-          <h2 className="text-2xl font-bold text-green-700 text-center mb-4">
-            Inventory Overview
-          </h2>
-
+        {/* Inventory Table */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border">
           {noResults ? (
             <p className="text-center text-red-500 font-semibold">
               ❌ No matching items found.
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-300 rounded-lg">
-                <thead className="bg-green-700 text-white">
+              <table className="min-w-full border border-gray-200 rounded-lg">
+                <thead className="bg-green-900 text-white">
                   <tr>
-                    <th className="px-4 py-2 text-left">Item Code</th>
-                    <th className="px-4 py-2 text-left">Category</th>
-                    <th className="px-4 py-2 text-left">Item Name</th>
-                    <th className="px-4 py-2 text-left">Quantity</th>
-                    <th className="px-4 py-2 text-left">Unit</th>
-                    <th className="px-4 py-2 text-left">Received Date</th>
-                    <th className="px-4 py-2 text-left">Expired Date</th>
-                    <th className="px-4 py-2 text-left">Reorder Level</th>
-                    <th className="px-4 py-2 text-left">Description</th>
-                    <th className="px-4 py-2 text-left">Purchase ID</th>
-                    <th className="px-4 py-2 text-left">Action</th>
+                    <th className="px-4 py-3 text-left">Item Code</th>
+                    <th className="px-4 py-3 text-left">Category</th>
+                    <th className="px-4 py-3 text-left">Item Name</th>
+                    <th className="px-4 py-3 text-left">Quantity</th>
+                    <th className="px-4 py-3 text-left">Unit</th>
+                    <th className="px-4 py-3 text-left">Received Date</th>
+                    <th className="px-4 py-3 text-left">Expired Date</th>
+                    <th className="px-4 py-3 text-left">Reorder Level</th>
+                    <th className="px-4 py-3 text-left">Description</th>
+                    <th className="px-4 py-3 text-left">Purchase ID</th>
+                    <th className="px-4 py-3 text-left">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -162,7 +170,7 @@ function Items() {
 
         {/* Low Stock Section */}
         {lowStockItems.length > 0 && (
-          <div className="mb-10 bg-white p-6 rounded-xl shadow-lg border">
+          <div className="mt-8 bg-white p-6 rounded-xl shadow-lg border">
             <h2 className="text-2xl font-bold text-red-600 text-center mb-4">
               ⚠ Low Stock Items
             </h2>
