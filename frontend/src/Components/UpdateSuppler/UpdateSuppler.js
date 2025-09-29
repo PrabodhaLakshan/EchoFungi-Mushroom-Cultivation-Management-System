@@ -70,12 +70,14 @@ function UpdateSupplier() {
     }
 
     // Email
-    const email = inputs.Email?.trim();
-    if (!email) {
+     if (!inputs.Email.trim()) {
       newErrors.Email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.Email = "Invalid email format.";
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(inputs.Email.trim())
+    ) {
+      newErrors.Email = "Email format is invalid.";
     }
+
 
     // Address
     if (!inputs.Address?.trim()) {
@@ -168,7 +170,7 @@ function UpdateSupplier() {
             <div>
               <label className="block text-gray-700 font-medium mb-1">Email</label>
               <input
-                type="email"
+                type="text"
                 name="Email"
                 value={inputs.Email}
                 onChange={handleChange}

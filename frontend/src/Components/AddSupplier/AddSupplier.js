@@ -16,11 +16,10 @@ function AddSupplier() {
 
   const [errors, setErrors] = useState({});
 
-  // ✅ Handle input change with live error clearing
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Only allow digits in Phone_number
+    // Only allow digits for phone number
     if (name === "Phone_number" && !/^\d*$/.test(value)) return;
 
     setInputs((prev) => ({
@@ -28,14 +27,13 @@ function AddSupplier() {
       [name]: value,
     }));
 
-    // Clear error as the user corrects input
+    
     setErrors((prev) => ({
       ...prev,
       [name]: "",
     }));
   };
 
-  // ✅ Validate all fields on submit
   const validate = () => {
     const newErrors = {};
 
@@ -44,20 +42,21 @@ function AddSupplier() {
       newErrors.Supplier_name = "Supplier name is required.";
     } else if (inputs.Supplier_name.length < 2) {
       newErrors.Supplier_name = "Supplier name must be at least 2 characters.";
+    } else if (!/^[A-Za-z\s.]+$/.test(inputs.Supplier_name)) {
+      newErrors.Supplier_name = "Supplier name can contain letters, spaces, and dots only.";
     }
 
     // Phone Number
     const phone = inputs.Phone_number?.toString().trim();
     if (!/^0\d{9}$/.test(phone)) {
-      newErrors.Phone_number =
-        "Phone number must start with 0 and be exactly 10 digits.";
+      newErrors.Phone_number = "Phone number must start with 0 and be exactly 10 digits.";
     }
 
     // Email
     if (!inputs.Email.trim()) {
       newErrors.Email = "Email is required.";
     } else if (
-      !/^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/.test(inputs.Email.trim())
+      !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(inputs.Email.trim())
     ) {
       newErrors.Email = "Email format is invalid.";
     }
@@ -73,7 +72,6 @@ function AddSupplier() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Submit data
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -136,9 +134,7 @@ function AddSupplier() {
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               />
               {errors.Supplier_name && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.Supplier_name}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.Supplier_name}</p>
               )}
             </div>
 
@@ -161,19 +157,15 @@ function AddSupplier() {
                 }`}
               />
               {errors.Phone_number && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.Phone_number}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.Phone_number}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">
-                Email
-              </label>
+              <label className="block text-gray-600 font-medium mb-1">Email</label>
               <input
-                type="email"
+                type="text"
                 name="Email"
                 value={inputs.Email}
                 onChange={handleChange}
@@ -187,9 +179,7 @@ function AddSupplier() {
 
             {/* Address */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">
-                Address
-              </label>
+              <label className="block text-gray-600 font-medium mb-1">Address</label>
               <textarea
                 name="Address"
                 value={inputs.Address}

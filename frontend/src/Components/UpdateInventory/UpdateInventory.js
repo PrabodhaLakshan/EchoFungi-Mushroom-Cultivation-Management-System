@@ -56,8 +56,8 @@ function UpdateInventory() {
       newErrors.Quantity = "Quantity is required.";
     } else if (Number(inputs.Quantity) < 0) {
       newErrors.Quantity = "Quantity cannot be negative.";
-    } else if (Number(inputs.Quantity) > 50) {
-      newErrors.Quantity = "Quantity cannot exceed 50.";
+    } else if (Number(inputs.Quantity) > 100) {
+      newErrors.Quantity = "Quantity cannot exceed 100.";
     }
 
     if (!inputs.Unit?.trim()) newErrors.Unit = "Unit is required.";
