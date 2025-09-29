@@ -269,6 +269,7 @@ export default function SalesDash() {
 
   const timeSeriesOptions = {
     responsive: true,
+    maintainAspectRatio: true,
     interaction: { mode: "index", intersect: false },
     stacked: false,
     scales: {
@@ -305,112 +306,153 @@ export default function SalesDash() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
-      {/* Sidebar */}
-      <div className="fixed top-0 left-0 w-64 h-full bg-green-800 text-white shadow-lg">
+    <div className="bg-gray-50 min-h-screen">
+      {/* Sidebar - Fixed */}
+      <div className="fixed top-0 left-0 w-64 h-full bg-green-800 text-white shadow-lg z-50">
         <Navbar />
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 ml-64">
-        {/* Header */}
-        <div className="bg-white shadow h-16 flex items-center px-6">
+      {/* Main content with proper margin */}
+      <div className="ml-64">
+        {/* Header - Fixed at top with proper styling */}
+        <div className="fixed top-0 right-0 left-64 bg-white shadow-md z-40 h-16">
           <Header />
         </div>
 
-        <div className="p-6">
+        {/* Content area with top padding to account for fixed header */}
+        <div className="pt-20 px-6 pb-6">
           <h2 className="text-3xl font-bold text-green-800 mb-6">Sales Manager Dashboard</h2>
 
           {/* Period toggle */}
-          <div className="flex items-center gap-3 mb-4">
-            {["daily", "weekly", "monthly", "yearly"].map((p) => (
-              <button
-                key={p}
-                className={`px-3 py-1 rounded ${period === p ? "bg-green-700 text-white" : "bg-white border"}`}
-                onClick={() => setPeriod(p)}
-              >
-                {p.charAt(0).toUpperCase() + p.slice(1)}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <div className="flex gap-2">
+              {["daily", "weekly", "monthly", "yearly"].map((p) => (
+                <button
+                  key={p}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    period === p 
+                      ? "bg-green-700 text-white shadow-md" 
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setPeriod(p)}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
             <div className="ml-auto text-sm text-gray-600">
-              Showing: <span className="font-medium">{period}</span>
+              Showing: <span className="font-semibold text-green-700">{period}</span>
             </div>
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-bold text-green-700">Rs {totalRevenue.toLocaleString()}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <p className="text-sm text-gray-600 font-medium mb-2">Total Revenue</p>
+              <p className="text-3xl font-bold text-green-700">Rs {totalRevenue.toLocaleString()}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Total Sales Records</p>
-              <p className="text-2xl font-bold text-green-700">{totalSalesCount}</p>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <p className="text-sm text-gray-600 font-medium mb-2">Total Sales Records</p>
+              <p className="text-3xl font-bold text-green-700">{totalSalesCount}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Total Orders</p>
-              <p className="text-2xl font-bold text-green-700">{totalOrders}</p>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <p className="text-sm text-gray-600 font-medium mb-2">Total Orders</p>
+              <p className="text-3xl font-bold text-green-700">{totalOrders}</p>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Total Customers</p>
-              <p className="text-2xl font-bold text-green-700">{totalCustomers}</p>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <p className="text-sm text-gray-600 font-medium mb-2">Total Customers</p>
+              <p className="text-3xl font-bold text-green-700">{totalCustomers}</p>
             </div>
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white p-4 shadow rounded-lg">
-              <h3 className="text-lg font-semibold mb-2">Sales Overview</h3>
-              {timeLabels.length ? <Bar data={timeSeriesData} options={timeSeriesOptions} /> : <p className="text-gray-500">No sales data</p>}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-xl">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Sales Overview</h3>
+              {timeLabels.length ? (
+                <div className="h-80">
+                  <Bar data={timeSeriesData} options={timeSeriesOptions} />
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-20">No sales data available</p>
+              )}
             </div>
 
-            <div className="bg-white p-4 shadow rounded-lg">
-              <h3 className="text-lg font-semibold mb-2">Orders Status</h3>
-              <Pie data={ordersPieData} />
-              <div className="mt-2 text-sm">
-                <div>Pending: {ordersStatus.pending}</div>
-                <div>Delivered: {ordersStatus.delivered}</div>
+            <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-xl">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Orders Status</h3>
+              <div className="h-80 flex items-center justify-center">
+                <div className="w-full max-w-sm">
+                  <Pie data={ordersPieData} />
+                </div>
+              </div>
+              <div className="mt-4 flex justify-center gap-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <span>Pending: <span className="font-semibold">{ordersStatus.pending}</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span>Delivered: <span className="font-semibold">{ordersStatus.delivered}</span></span>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white p-4 shadow rounded-lg">
-              <h3 className="text-lg font-semibold mb-2">Top Products</h3>
-              <Bar data={topProductsData} />
+            <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-xl">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Products</h3>
+              <div className="h-80">
+                <Bar data={topProductsData} options={{ responsive: true, maintainAspectRatio: true }} />
+              </div>
             </div>
 
-            <div className="bg-white p-4 shadow rounded-lg">
-              <h3 className="text-lg font-semibold mb-2">Product Distribution</h3>
-              <Pie data={productPieData} />
+            <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-xl">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Distribution</h3>
+              <div className="h-80 flex items-center justify-center">
+                <div className="w-full max-w-sm">
+                  <Pie data={productPieData} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Latest Orders */}
-          <div className="bg-white p-4 shadow rounded-lg overflow-x-auto">
-            <h3 className="text-lg font-semibold mb-2">Latest Orders</h3>
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2 border">Order ID</th>
-                  <th className="px-4 py-2 border">Shop Name</th>
-                  <th className="px-4 py-2 border">Product</th>
-                  <th className="px-4 py-2 border">Quantity</th>
-                  <th className="px-4 py-2 border">Order Date</th>
-                  <th className="px-4 py-2 border">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latestOrders.map((o) => (
-                  <tr key={o.OrderId}>
-                    <td className="px-4 py-2 border">{o.OrderId}</td>
-                    <td className="px-4 py-2 border">{o.ShopName}</td>
-                    <td className="px-4 py-2 border">{o.ProductId}</td>
-                    <td className="px-4 py-2 border">{o.Quantity}</td>
-                    <td className="px-4 py-2 border">{o.OrderDate ? new Date(o.OrderDate).toLocaleDateString() : "-"}</td>
-                    <td className="px-4 py-2 border">{o.Status}</td>
+          <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-xl">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Latest Orders</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Order ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Shop Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Quantity</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Order Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {latestOrders.map((o, idx) => (
+                    <tr key={o.OrderId} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{o.OrderId}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{o.ShopName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{o.ProductId}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{o.Quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {o.OrderDate ? new Date(o.OrderDate).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          o.Status.toLowerCase() === 'delivered' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {o.Status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
