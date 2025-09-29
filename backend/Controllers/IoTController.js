@@ -1,7 +1,7 @@
 const axios = require('axios');
 const IotData = require('../Model/IoTData');
 const maxtempm = require('../Model/TemperatureSetting');
-const BLYNK_TOKEN = "5zV5DqmmwIKanPx7JJeg-fqVeOG8oB5n";  //D3EePqet-8MAOHDTrRpSPPg_ADFHOYag
+const BLYNK_TOKEN = "D3EePqet-8MAOHDTrRpSPPg_ADFHOYag";  //D3EePqet-8MAOHDTrRpSPPg_ADFHOYag
 
 // Fetch real-time Blynk data
 const fetchBlynkData = async () => {
