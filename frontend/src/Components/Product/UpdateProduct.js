@@ -16,6 +16,7 @@ function UpdateProduct() {
   const [originalData, setOriginalData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // Fetch product data by ID
   useEffect(() => {
@@ -29,8 +30,16 @@ function UpdateProduct() {
           setLoading(false);
           return;
         }
-        setInputs(productData);
-        setOriginalData(productData);
+
+        const formattedData = {
+          ProductName: productData.ProductName || "",
+          MushroomType: productData.MushroomType || "",
+          UnitPrice: productData.UnitPrice || "",
+          Status: productData.Status || "",
+        };
+
+        setInputs(formattedData);
+        setOriginalData(formattedData);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -42,22 +51,53 @@ function UpdateProduct() {
     fetchProduct();
   }, [id]);
 
+  // Input change handler
   const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setInputs((prev) => ({
+      ...prev,
+      [name]: name === "UnitPrice" ? Number(value) : value,
+    }));
+
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  // Reset button handler
   const handleReset = () => {
     if (originalData) {
-      setInputs(originalData);
+      setInputs({ ...originalData });
+      setErrors({});
     }
+  };
+
+  // Validation before submit
+  const validate = () => {
+    const tempErrors = {};
+
+    // Product Name: letters and spaces only
+    if (!inputs.ProductName.trim()) tempErrors.ProductName = "Product Name is required";
+    else if (!/^[A-Za-z\s]+$/.test(inputs.ProductName))
+      tempErrors.ProductName = "Product Name can only contain letters and spaces";
+
+    // Mushroom Type: letters and spaces only
+    if (!inputs.MushroomType.trim()) tempErrors.MushroomType = "Mushroom Type is required";
+    else if (!/^[A-Za-z\s]+$/.test(inputs.MushroomType))
+      tempErrors.MushroomType = "Mushroom Type can only contain letters and spaces";
+
+    // Unit Price
+    if (inputs.UnitPrice === "" || isNaN(inputs.UnitPrice) || inputs.UnitPrice < 0)
+      tempErrors.UnitPrice = "Unit Price must be a positive number";
+
+    // Status
+    if (!inputs.Status) tempErrors.Status = "Status is required";
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
   };
 
   const sendRequest = async () => {
     try {
-      const res = await axios.put(
-        `http://localhost:5000/Product/${id}`,
-        inputs
-      );
+      const res = await axios.put(`http://localhost:5000/Product/${id}`, inputs);
       return res.data;
     } catch (err) {
       console.error("Error updating Product:", err);
@@ -67,13 +107,13 @@ function UpdateProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return; // Stop if validation fails
     await sendRequest();
     navigate("/Product");
   };
 
   if (loading) return <p className="text-gray-600">Loading product data...</p>;
-  if (error)
-    return <p className="text-red-500 font-semibold">{error}</p>;
+  if (error) return <p className="text-red-500 font-semibold">{error}</p>;
   if (!inputs) return null;
 
   return (
@@ -83,38 +123,39 @@ function UpdateProduct() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Product Name */}
         <div>
-          <label className="block text-green-700 font-semibold mb-1">
-            Product Name
-          </label>
+          <label className="block text-green-700 font-semibold mb-1">Product Name</label>
           <input
             type="text"
             name="ProductName"
             value={inputs.ProductName}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-green-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.ProductName ? "border-red-500 focus:ring-red-400" : "border-green-200 focus:ring-green-400"
+            }`}
           />
+          {errors.ProductName && <p className="text-red-600 text-sm mt-1">{errors.ProductName}</p>}
         </div>
 
+        {/* Mushroom Type */}
         <div>
-          <label className="block text-green-700 font-semibold mb-1">
-            Mushroom Type
-          </label>
+          <label className="block text-green-700 font-semibold mb-1">Mushroom Type</label>
           <input
             type="text"
             name="MushroomType"
             value={inputs.MushroomType}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-green-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.MushroomType ? "border-red-500 focus:ring-red-400" : "border-green-200 focus:ring-green-400"
+            }`}
           />
+          {errors.MushroomType && <p className="text-red-600 text-sm mt-1">{errors.MushroomType}</p>}
         </div>
 
+        {/* Unit Price */}
         <div>
-          <label className="block text-green-700 font-semibold mb-1">
-            Unit Price
-          </label>
+          <label className="block text-green-700 font-semibold mb-1">Unit Price</label>
           <input
             type="number"
             name="UnitPrice"
@@ -122,28 +163,32 @@ function UpdateProduct() {
             onChange={handleChange}
             step="0.01"
             min="0"
-            className="w-full px-3 py-2 border border-green-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.UnitPrice ? "border-red-500 focus:ring-red-400" : "border-green-200 focus:ring-green-400"
+            }`}
           />
+          {errors.UnitPrice && <p className="text-red-600 text-sm mt-1">{errors.UnitPrice}</p>}
         </div>
 
+        {/* Status */}
         <div>
-          <label className="block text-green-700 font-semibold mb-1">
-            Status
-          </label>
+          <label className="block text-green-700 font-semibold mb-1">Status</label>
           <select
             name="Status"
             value={inputs.Status}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-green-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-            required
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              errors.Status ? "border-red-500 focus:ring-red-400" : "border-green-200 focus:ring-green-400"
+            }`}
           >
             <option value="">-- Select Status --</option>
             <option value="Active">Available</option>
             <option value="Inactive">Unavailable</option>
           </select>
+          {errors.Status && <p className="text-red-600 text-sm mt-1">{errors.Status}</p>}
         </div>
 
+        {/* Buttons */}
         <div className="flex gap-4 mt-4">
           <button
             type="submit"

@@ -18,8 +18,9 @@ function UpdateCustomer() {
   const [originalData, setOriginalData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
 
-  // Fetch product data
+  // Fetch customer data
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
@@ -45,11 +46,65 @@ function UpdateCustomer() {
   }, [id]);
 
   const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" })); // clear error on change
   };
 
   const handleReset = () => {
     if (originalData) setInputs(originalData);
+    setErrors({});
+  };
+
+  // ✅ Validation Function
+  const validate = () => {
+    const newErrors = {};
+
+    // Shop Name - letters and spaces only, at least 2 words
+    if (!inputs.ShopName) {
+      newErrors.ShopName = "Shop Name is required.";
+    } else if (!/^[A-Za-z\s]+$/.test(inputs.ShopName)) {
+      newErrors.ShopName = "Shop Name can only contain letters and spaces.";
+    } else if (inputs.ShopName.trim().split(/\s+/).length < 2) {
+      newErrors.ShopName = "Shop Name must contain at least 2 words.";
+    }
+
+    // Owner Name - letters and spaces only, at least 2 words
+    if (!inputs.OwnerName) {
+      newErrors.OwnerName = "Owner Name is required.";
+    } else if (!/^[A-Za-z\s]+$/.test(inputs.OwnerName)) {
+      newErrors.OwnerName = "Owner Name can only contain letters and spaces.";
+    } else if (inputs.OwnerName.trim().split(/\s+/).length < 2) {
+      newErrors.OwnerName = "Owner Name must contain at least 2 words.";
+    }
+
+    // Email - must include @ and .com
+    if (!inputs.Email) {
+      newErrors.Email = "Email is required.";
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(inputs.Email)) {
+      newErrors.Email = "Invalid email format (must include @ and .com).";
+    }
+
+    // Phone validation - Sri Lankan style
+    if (!inputs.PhoneNo) {
+      newErrors.PhoneNo = "Phone number is required.";
+    } else if (!/^07\d{8}$/.test(inputs.PhoneNo)) {
+      newErrors.PhoneNo =
+        "Phone number must be 10 digits and start with 07 (e.g., 0712345678).";
+    }
+
+    // Address validation
+    if (!inputs.City) {
+      newErrors.City = "Address is required.";
+    }
+
+    // Status validation
+    if (!inputs.Status) {
+      newErrors.Status = "Status must be selected.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const sendRequest = async () => {
@@ -67,6 +122,7 @@ function UpdateCustomer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     await sendRequest();
     navigate("/Customer");
   };
@@ -95,9 +151,13 @@ function UpdateCustomer() {
             name="ShopName"
             onChange={handleChange}
             value={inputs.ShopName}
-            required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              errors.ShopName ? "border-red-500" : "focus:ring-green-400"
+            }`}
           />
+          {errors.ShopName && (
+            <span className="text-red-600 text-sm mt-1">{errors.ShopName}</span>
+          )}
         </div>
 
         {/* Owner Name */}
@@ -110,9 +170,13 @@ function UpdateCustomer() {
             name="OwnerName"
             onChange={handleChange}
             value={inputs.OwnerName}
-            required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              errors.OwnerName ? "border-red-500" : "focus:ring-green-400"
+            }`}
           />
+          {errors.OwnerName && (
+            <span className="text-red-600 text-sm mt-1">{errors.OwnerName}</span>
+          )}
         </div>
 
         {/* Email */}
@@ -125,9 +189,13 @@ function UpdateCustomer() {
             name="Email"
             onChange={handleChange}
             value={inputs.Email}
-            required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              errors.Email ? "border-red-500" : "focus:ring-green-400"
+            }`}
           />
+          {errors.Email && (
+            <span className="text-red-600 text-sm mt-1">{errors.Email}</span>
+          )}
         </div>
 
         {/* Phone No */}
@@ -138,15 +206,20 @@ function UpdateCustomer() {
           <input
             type="tel"
             name="PhoneNo"
-            placeholder="07X-XXXXXXX"
+            maxLength={10}
             onChange={handleChange}
             value={inputs.PhoneNo}
-            required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            placeholder="07XXXXXXXX"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              errors.PhoneNo ? "border-red-500" : "focus:ring-green-400"
+            }`}
           />
+          {errors.PhoneNo && (
+            <span className="text-red-600 text-sm mt-1">{errors.PhoneNo}</span>
+          )}
         </div>
 
-        {/* City */}
+        {/* Address */}
         <div className="flex flex-col mb-4">
           <label className="mb-1 text-sm font-semibold text-green-700">
             Address
@@ -156,9 +229,13 @@ function UpdateCustomer() {
             name="City"
             onChange={handleChange}
             value={inputs.City}
-            required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              errors.City ? "border-red-500" : "focus:ring-green-400"
+            }`}
           />
+          {errors.City && (
+            <span className="text-red-600 text-sm mt-1">{errors.City}</span>
+          )}
         </div>
 
         {/* Status */}
@@ -167,17 +244,20 @@ function UpdateCustomer() {
             Status
           </label>
           <select
-            id="Status"
             name="Status"
             onChange={handleChange}
             value={inputs.Status}
-            required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              errors.Status ? "border-red-500" : "focus:ring-green-400"
+            }`}
           >
             <option value="">-- Select Status --</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
+          {errors.Status && (
+            <span className="text-red-600 text-sm mt-1">{errors.Status}</span>
+          )}
         </div>
 
         {/* Buttons */}
@@ -190,7 +270,7 @@ function UpdateCustomer() {
           </button>
           <button
             type="reset"
-             onClick={handleReset}
+            onClick={handleReset}
             className="flex-1 border border-green-400 bg-green-50 text-green-700 py-2 rounded-lg hover:bg-green-100 transition"
           >
             Clear

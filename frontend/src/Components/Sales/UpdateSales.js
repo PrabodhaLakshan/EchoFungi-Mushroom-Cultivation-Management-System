@@ -17,22 +17,26 @@ function UpdateSales() {
     TotalPrice: 0
   });
   const [originalData, setOriginalData] = useState(null);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-//fetch customer
-    useEffect(() => {
-  const fetchCustomers = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/Customer");
-      setCustomers(res.data.Customers || []);
-    } catch (err) {
-      console.error("Failed to fetch customers", err);
-    }
-  };
-  fetchCustomers();
-}, []);
 
-  // Fetch product list
+  const today = new Date().toISOString().split("T")[0]; // max date for sale
+
+  // Fetch customers
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/Customer");
+        setCustomers(res.data.Customers || []);
+      } catch (err) {
+        console.error("Failed to fetch customers", err);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -79,15 +83,26 @@ function UpdateSales() {
     const { name, value } = e.target;
     setInputs(prev => ({
       ...prev,
-      [name]: name === "NumberOfPackets" || name === "NumberOfReturns" ? Number(value) : value
+      [name]: (name === "NumberOfPackets" || name === "NumberOfReturns") ? Number(value) : value
     }));
+    setErrors(prev => ({ ...prev, [name]: "" })); // clear error on change
   };
 
   const handleReset = () => {
-    if (originalData) setInputs(originalData);
+    if (originalData) {
+      setInputs({
+        ShopName: originalData.ShopName || "",
+        ProductId: originalData.ProductId ?? "",
+        Date: originalData.Date ? new Date(originalData.Date).toISOString().split("T")[0] : "",
+        NumberOfPackets: originalData.NumberOfPackets ?? 0,
+        NumberOfReturns: originalData.NumberOfReturns ?? 0,
+        TotalPrice: originalData.TotalPrice ?? 0
+      });
+      setErrors({});
+    }
   };
 
-  // Recalculate total price
+  // Recalculate total price automatically
   useEffect(() => {
     const selectedProduct = products.find(p => String(p.ProductId) === String(inputs.ProductId));
     if (selectedProduct) {
@@ -97,9 +112,30 @@ function UpdateSales() {
     }
   }, [inputs.NumberOfPackets, inputs.NumberOfReturns, inputs.ProductId, products]);
 
+  // Validation
+  const validate = () => {
+    const newErrors = {};
+    if (!inputs.ShopName) newErrors.ShopName = "Please select a shop.";
+    if (!inputs.ProductId) newErrors.ProductId = "Please select a product.";
+    if (!inputs.Date) newErrors.Date = "Please select a sale date.";
+    else if (new Date(inputs.Date) > new Date()) newErrors.Date = "Sale date cannot be in the future.";
+    if (inputs.NumberOfPackets < 0) newErrors.NumberOfPackets = "Number of packets cannot be negative.";
+    if (inputs.NumberOfReturns < 0) newErrors.NumberOfReturns = "Number of returns cannot be negative.";
+    if (inputs.NumberOfReturns > inputs.NumberOfPackets) newErrors.NumberOfReturns = "Returns cannot exceed packets.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const sendRequest = async () => {
     try {
-      const res = await axios.put(`http://localhost:5000/Sale/${id}`, inputs);
+      const payload = {
+        ...inputs,
+        ProductId: Number(inputs.ProductId),
+        NumberOfPackets: Number(inputs.NumberOfPackets),
+        NumberOfReturns: Number(inputs.NumberOfReturns),
+        TotalPrice: Number(inputs.TotalPrice)
+      };
+      const res = await axios.put(`http://localhost:5000/Sale/${id}`, payload);
       return res.data;
     } catch (err) {
       console.error("Failed to update sale", err);
@@ -109,6 +145,7 @@ function UpdateSales() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     await sendRequest();
     navigate("/Sales");
   };
@@ -122,37 +159,33 @@ function UpdateSales() {
         onSubmit={handleSubmit}
         className="w-full max-w-md bg-white shadow-lg rounded-xl p-6 border border-gray-200"
       >
-        <h2 className="text-2xl font-bold text-green-800 text-center mb-6">
-          Update Sale
-        </h2>
+        <h2 className="text-2xl font-bold text-green-800 text-center mb-6">Update Sale</h2>
 
         {/* Shop Name */}
         <div className="flex flex-col mb-4">
-    <label className="mb-1 text-sm font-semibold text-green-700">Shop Name</label>
-    <select
-      name="ShopName"
-      value={inputs.ShopName}
-      onChange={handleChange}
-      required
-      className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none" >
-    <option value="">-- Select Shop --</option>
-       {customers.map((c) => (
-      <option key={c.CustomerId} value={c.ShopName}>
-        {c.ShopName} ({c.City})
-        </option>
-          ))}
-        </select>
+          <label className="mb-1 text-sm font-semibold text-green-700">Shop Name</label>
+          <select
+            name="ShopName"
+            value={inputs.ShopName}
+            onChange={handleChange}
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none ${errors.ShopName ? "border-red-500" : ""}`}
+            required
+          >
+            <option value="">-- Select Shop --</option>
+            {customers.map(c => <option key={c.CustomerId} value={c.ShopName}>{c.ShopName} ({c.City})</option>)}
+          </select>
+          {errors.ShopName && <span className="text-red-600 text-sm mt-1">{errors.ShopName}</span>}
         </div>
 
-        {/* Product Select */}
+        {/* Product */}
         <div className="flex flex-col mb-4">
           <label className="mb-1 text-sm font-semibold text-green-700">Product</label>
           <select
             name="ProductId"
             value={inputs.ProductId}
             onChange={handleChange}
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none ${errors.ProductId ? "border-red-500" : ""}`}
             required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
           >
             <option value="">-- Select Product --</option>
             {products.map(p => (
@@ -161,9 +194,10 @@ function UpdateSales() {
               </option>
             ))}
           </select>
+          {errors.ProductId && <span className="text-red-600 text-sm mt-1">{errors.ProductId}</span>}
         </div>
 
-        {/* Date */}
+        {/* Sale Date */}
         <div className="flex flex-col mb-4">
           <label className="mb-1 text-sm font-semibold text-green-700">Sale Date</label>
           <input
@@ -171,9 +205,11 @@ function UpdateSales() {
             name="Date"
             value={inputs.Date}
             onChange={handleChange}
+            max={today}  // restrict future dates
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none ${errors.Date ? "border-red-500" : ""}`}
             required
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
           />
+          {errors.Date && <span className="text-red-600 text-sm mt-1">{errors.Date}</span>}
         </div>
 
         {/* Number of Packets */}
@@ -184,9 +220,10 @@ function UpdateSales() {
             name="NumberOfPackets"
             value={inputs.NumberOfPackets}
             onChange={handleChange}
-            
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            min="0"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none ${errors.NumberOfPackets ? "border-red-500" : ""}`}
           />
+          {errors.NumberOfPackets && <span className="text-red-600 text-sm mt-1">{errors.NumberOfPackets}</span>}
         </div>
 
         {/* Number of Returns */}
@@ -197,9 +234,10 @@ function UpdateSales() {
             name="NumberOfReturns"
             value={inputs.NumberOfReturns}
             onChange={handleChange}
-            
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            min="0"
+            className={`px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none ${errors.NumberOfReturns ? "border-red-500" : ""}`}
           />
+          {errors.NumberOfReturns && <span className="text-red-600 text-sm mt-1">{errors.NumberOfReturns}</span>}
         </div>
 
         {/* Total Price */}
@@ -216,19 +254,8 @@ function UpdateSales() {
 
         {/* Buttons */}
         <div className="flex justify-between gap-4 mt-6">
-          <button
-            type="submit"
-            className="flex-1 bg-green-700 text-white py-2 rounded-lg hover:bg-green-800 transition"
-          >
-            Submit
-          </button>
-          <button
-            type="reset"
-            onClick={handleReset}
-            className="flex-1 border border-green-400 bg-green-50 text-green-700 py-2 rounded-lg hover:bg-green-100 transition"
-          >
-            Clear
-          </button>
+          <button type="submit" className="flex-1 bg-green-700 text-white py-2 rounded-lg hover:bg-green-800 transition">Submit</button>
+          <button type="reset" onClick={handleReset} className="flex-1 border border-green-400 bg-green-50 text-green-700 py-2 rounded-lg hover:bg-green-100 transition">Clear</button>
         </div>
       </form>
     </div>

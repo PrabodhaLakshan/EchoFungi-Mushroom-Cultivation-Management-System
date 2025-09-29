@@ -10,7 +10,14 @@ function StockD(props) {
     navigate(`/Stock/${StockId}`);
   };
 
-  // ✅ Improved Expiry Check
+  // Confirm before delete
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this stock?")) {
+      onDelete(StockId);
+    }
+  };
+
+  // Improved Expiry Check
   const parsedExpire = ExpireDate ? new Date(ExpireDate) : null;
   let isExpired = false;
   if (parsedExpire instanceof Date && !isNaN(parsedExpire)) {
@@ -46,7 +53,7 @@ function StockD(props) {
         </button>
         <button
           className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
-          onClick={() => onDelete(StockId)}
+          onClick={handleDelete}
         >
           Delete
         </button>

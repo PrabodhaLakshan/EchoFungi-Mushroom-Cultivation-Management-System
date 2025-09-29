@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import Header from "../Header/Header";
 import Navbar from "../Navbar/Nav";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -43,7 +44,6 @@ function sumBy(arr, keyFn) {
   return arr.reduce((acc, item) => acc + keyFn(item), 0);
 }
 
-// Aggregate sales for charts
 function aggregateSalesByPeriod(sales, period = "daily") {
   const map = new Map();
 
@@ -59,10 +59,13 @@ function aggregateSalesByPeriod(sales, period = "daily") {
       const yearStart = new Date(tmp.getFullYear(), 0, 1);
       const weekNo = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
       key = `${tmp.getFullYear()}-W${String(weekNo).padStart(2, "0")}`;
-    } else if (period === "monthly")
+    } else if (period === "monthly") {
       key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    else if (period === "yearly") key = `${date.getFullYear()}`;
-    else key = DATE_FORMAT_DAY(date);
+    } else if (period === "yearly") {
+      key = `${date.getFullYear()}`;
+    } else {
+      key = DATE_FORMAT_DAY(date);
+    }
 
     const qty = Number(s.NumberOfPackets || 0);
     const rev = Number(s.TotalPrice || 0);
@@ -83,7 +86,6 @@ function aggregateSalesByPeriod(sales, period = "daily") {
   };
 }
 
-// Check if a date is in the current period
 function isInCurrentPeriod(dateStr, period) {
   const date = new Date(dateStr);
   if (isNaN(date)) return false;
@@ -122,7 +124,6 @@ export default function SalesDash() {
   const [period, setPeriod] = useState("daily");
   const [topN] = useState(5);
 
-  // Fetch all data
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -171,7 +172,6 @@ export default function SalesDash() {
     fetchAll();
   }, []);
 
-  // Filter current period sales & orders for summary cards
   const currentPeriodSales = useMemo(
     () => sales.filter((s) => isInCurrentPeriod(s.Date, period)),
     [sales, period]
@@ -182,7 +182,6 @@ export default function SalesDash() {
     [orders, period]
   );
 
-  // Summary metrics
   const totalRevenue = useMemo(
     () => sumBy(currentPeriodSales, (s) => Number(s.TotalPrice || 0)),
     [currentPeriodSales]
@@ -194,13 +193,11 @@ export default function SalesDash() {
     return uniqueCustomerIds.size;
   }, [currentPeriodOrders]);
 
-  // Sales charts
   const { labels: timeLabels, qtyData: timeQty, revData: timeRev } = useMemo(
     () => aggregateSalesByPeriod(sales, period),
     [sales, period]
   );
 
-  // Top products
   const topProducts = useMemo(() => {
     const map = new Map();
     sales.forEach((s) => {
@@ -232,7 +229,6 @@ export default function SalesDash() {
       .sort((a, b) => b.qty - a.qty);
   }, [sales, products]);
 
-  // Orders status
   const ordersStatus = useMemo(() => {
     let pending = 0;
     let delivered = 0;
@@ -244,13 +240,11 @@ export default function SalesDash() {
     return { pending, delivered };
   }, [orders]);
 
-  // Latest orders
   const latestOrders = useMemo(
     () => [...orders].sort((a, b) => new Date(b.OrderDate) - new Date(a.OrderDate)).slice(0, 6),
     [orders]
   );
 
-  // Charts data
   const timeSeriesData = {
     labels: timeLabels,
     datasets: [
@@ -311,104 +305,113 @@ export default function SalesDash() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="w-64 bg-green-800 text-white fixed top-0 left-0 h-full shadow-lg">
+    <div className="bg-gray-50 min-h-screen flex">
+      {/* Sidebar */}
+      <div className="fixed top-0 left-0 w-64 h-full bg-green-800 text-white shadow-lg">
         <Navbar />
       </div>
 
-      <div className="flex-1 ml-64 p-6">
-        <h2 className="text-3xl font-bold text-green-800 mb-6">Sales Manager Dashboard</h2>
-
-        {/* Period toggle */}
-        <div className="flex items-center gap-3 mb-4">
-          {["daily", "weekly", "monthly", "yearly"].map((p) => (
-            <button
-              key={p}
-              className={`px-3 py-1 rounded ${period === p ? "bg-green-700 text-white" : "bg-white border"}`}
-              onClick={() => setPeriod(p)}
-            >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          ))}
-          <div className="ml-auto text-sm text-gray-600">
-            Showing: <span className="font-medium">{period}</span>
-          </div>
+      {/* Main content */}
+      <div className="flex-1 ml-64">
+        {/* Header */}
+        <div className="bg-white shadow h-16 flex items-center px-6">
+          <Header />
         </div>
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-500">Total Revenue</p>
-            <p className="text-2xl font-bold text-green-700">Rs {totalRevenue.toLocaleString()}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-500">Total Sales Records</p>
-            <p className="text-2xl font-bold text-green-700">{totalSalesCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-500">Total Orders</p>
-            <p className="text-2xl font-bold text-green-700">{totalOrders}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <p className="text-sm text-gray-500">Total Customers</p>
-            <p className="text-2xl font-bold text-green-700">{totalCustomers}</p>
-          </div>
-        </div>
+        <div className="p-6">
+          <h2 className="text-3xl font-bold text-green-800 mb-6">Sales Manager Dashboard</h2>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Sales Overview</h3>
-            {timeLabels.length ? <Bar data={timeSeriesData} options={timeSeriesOptions} /> : <p className="text-gray-500">No sales data</p>}
-          </div>
-
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Orders Status</h3>
-            <Pie data={ordersPieData} />
-            <div className="mt-2 text-sm">
-              <div>Pending: {ordersStatus.pending}</div>
-              <div>Delivered: {ordersStatus.delivered}</div>
+          {/* Period toggle */}
+          <div className="flex items-center gap-3 mb-4">
+            {["daily", "weekly", "monthly", "yearly"].map((p) => (
+              <button
+                key={p}
+                className={`px-3 py-1 rounded ${period === p ? "bg-green-700 text-white" : "bg-white border"}`}
+                onClick={() => setPeriod(p)}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </button>
+            ))}
+            <div className="ml-auto text-sm text-gray-600">
+              Showing: <span className="font-medium">{period}</span>
             </div>
           </div>
 
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Top Products</h3>
-            <Bar data={topProductsData} />
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Total Revenue</p>
+              <p className="text-2xl font-bold text-green-700">Rs {totalRevenue.toLocaleString()}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Total Sales Records</p>
+              <p className="text-2xl font-bold text-green-700">{totalSalesCount}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Total Orders</p>
+              <p className="text-2xl font-bold text-green-700">{totalOrders}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Total Customers</p>
+              <p className="text-2xl font-bold text-green-700">{totalCustomers}</p>
+            </div>
           </div>
 
-          <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Product Distribution</h3>
-            <Pie data={productPieData} />
-          </div>
-        </div>
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white p-4 shadow rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Sales Overview</h3>
+              {timeLabels.length ? <Bar data={timeSeriesData} options={timeSeriesOptions} /> : <p className="text-gray-500">No sales data</p>}
+            </div>
 
-        {/* Latest Orders Table */}
-        <div className="bg-white p-4 shadow rounded-lg overflow-x-auto">
-          <h3 className="text-lg font-semibold mb-2">Latest Orders</h3>
-          <table className="min-w-full border border-gray-200">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2 border">Order ID</th>
-                <th className="px-4 py-2 border">Shop Name</th>
-                <th className="px-4 py-2 border">Product</th>
-                <th className="px-4 py-2 border">Quantity</th>
-                <th className="px-4 py-2 border">Order Date</th>
-                <th className="px-4 py-2 border">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latestOrders.map((o) => (
-                <tr key={o.OrderId}>
-                  <td className="px-4 py-2 border">{o.OrderId}</td>
-                  <td className="px-4 py-2 border">{o.ShopName}</td>
-                  <td className="px-4 py-2 border">{o.ProductId}</td>
-                  <td className="px-4 py-2 border">{o.Quantity}</td>
-                  <td className="px-4 py-2 border">{o.OrderDate ? new Date(o.OrderDate).toLocaleDateString() : "-"}</td>
-                  <td className="px-4 py-2 border">{o.Status}</td>
+            <div className="bg-white p-4 shadow rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Orders Status</h3>
+              <Pie data={ordersPieData} />
+              <div className="mt-2 text-sm">
+                <div>Pending: {ordersStatus.pending}</div>
+                <div>Delivered: {ordersStatus.delivered}</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 shadow rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Top Products</h3>
+              <Bar data={topProductsData} />
+            </div>
+
+            <div className="bg-white p-4 shadow rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Product Distribution</h3>
+              <Pie data={productPieData} />
+            </div>
+          </div>
+
+          {/* Latest Orders */}
+          <div className="bg-white p-4 shadow rounded-lg overflow-x-auto">
+            <h3 className="text-lg font-semibold mb-2">Latest Orders</h3>
+            <table className="min-w-full border border-gray-200">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 border">Order ID</th>
+                  <th className="px-4 py-2 border">Shop Name</th>
+                  <th className="px-4 py-2 border">Product</th>
+                  <th className="px-4 py-2 border">Quantity</th>
+                  <th className="px-4 py-2 border">Order Date</th>
+                  <th className="px-4 py-2 border">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {latestOrders.map((o) => (
+                  <tr key={o.OrderId}>
+                    <td className="px-4 py-2 border">{o.OrderId}</td>
+                    <td className="px-4 py-2 border">{o.ShopName}</td>
+                    <td className="px-4 py-2 border">{o.ProductId}</td>
+                    <td className="px-4 py-2 border">{o.Quantity}</td>
+                    <td className="px-4 py-2 border">{o.OrderDate ? new Date(o.OrderDate).toLocaleDateString() : "-"}</td>
+                    <td className="px-4 py-2 border">{o.Status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

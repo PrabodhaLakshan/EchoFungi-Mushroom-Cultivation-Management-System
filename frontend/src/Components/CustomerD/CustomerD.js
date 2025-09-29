@@ -12,6 +12,15 @@ function CustomerD(props) {
     navigate(`/Customer/${CustomerId}`);
   };
 
+  const handleDelete = () => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete customer "${ShopName}" (ID: ${CustomerId})?`
+    );
+    if (confirmDelete) {
+      onDelete(CustomerId);
+    }
+  };
+
   return (
     <tr className="hover:bg-teal-100 even:bg-gray-50">
       <td className="px-4 py-2 border">{CustomerId}</td>
@@ -30,7 +39,7 @@ function CustomerD(props) {
         </button>
         <button
           className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
-          onClick={() => onDelete(CustomerId)}
+           onClick={handleDelete}
         >
           Delete
         </button>

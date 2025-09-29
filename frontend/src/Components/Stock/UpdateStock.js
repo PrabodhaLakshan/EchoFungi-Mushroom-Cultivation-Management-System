@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function UpdateStock() {
   const { id } = useParams();
@@ -12,18 +12,18 @@ function UpdateStock() {
     ExpireDate: "",
     Unit: "",
   });
-
   const [originalData, setOriginalData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [mushroomTypes, setMushroomTypes] = useState([]);
 
-  // Fetch stock data by ID
+  // Fetch stock data
   useEffect(() => {
     const fetchStock = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/Stock/${id}`);
         const stockData = res.data.stock;
-
         if (!stockData) {
           setError("Stock data not found");
           setLoading(false);
@@ -39,24 +39,70 @@ function UpdateStock() {
       }
     };
 
+    const fetchMushroomTypes = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/Product");
+        const products = res.data.Products || [];
+        const types = [...new Set(products.map((p) => p.MushroomType))];
+        setMushroomTypes(types);
+      } catch (err) {
+        console.error("Failed to fetch mushroom types:", err);
+      }
+    };
+
     fetchStock();
+    fetchMushroomTypes();
   }, [id]);
 
   const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    setInputs((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      // Auto-set ExpireDate if ManufactureDate changes
+      if (name === "ManufactureDate" && value) {
+        const manuDate = new Date(value);
+        manuDate.setDate(manuDate.getDate() + 2); // +2 days
+        updated.ExpireDate = manuDate.toISOString().split("T")[0];
+      }
+
+      return updated;
+    });
+  };
+
+  const validate = () => {
+    const errors = {};
+    const today = new Date().toISOString().split("T")[0];
+
+    if (!inputs.ManufactureDate) errors.ManufactureDate = "Manufacture date is required";
+    else if (inputs.ManufactureDate > today)
+      errors.ManufactureDate = "Manufacture date cannot be in the future";
+
+    if (!inputs.MushroomType) errors.MushroomType = "Mushroom type is required";
+
+    if (!inputs.Unit) errors.Unit = "Number of packets is required";
+    else if (Number(inputs.Unit) <= 0) errors.Unit = "Number of packets must be positive";
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleReset = () => {
     if (originalData) {
       setInputs(originalData);
+      setValidationErrors({});
     }
   };
 
   const sendRequest = async () => {
     try {
-      const res = await axios.put(`http://localhost:5000/Stock/${id}`,
-        inputs
-      );
+      const res = await axios.put(`http://localhost:5000/Stock/${id}`, {
+        ManufactureDate: new Date(inputs.ManufactureDate),
+        MushroomType: String(inputs.MushroomType),
+        ExpireDate: new Date(inputs.ExpireDate),
+        Unit: Number(inputs.Unit),
+      });
       return res.data;
     } catch (err) {
       console.error("Error updating Stock:", err);
@@ -66,17 +112,17 @@ function UpdateStock() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     await sendRequest();
     navigate("/Stock");
   };
 
   if (loading) return <p className="text-gray-600">Loading Stock data...</p>;
-  if (error)
-    return <p className="text-red-500 font-semibold">{error}</p>;
+  if (error) return <p className="text-red-500 font-semibold">{error}</p>;
   if (!inputs) return null;
 
   return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <form
         className="w-full max-w-md bg-white shadow-lg rounded-lg p-6 border border-green-100"
         onSubmit={handleSubmit}
@@ -85,64 +131,66 @@ function UpdateStock() {
           Update Stock
         </h2>
 
-        {/* ManufactureDate */}
+        {/* Manufacture Date */}
         <div className="mb-4">
-          <label className="block text-green-700 font-semibold mb-2">
-            Manufacture Date
-          </label>
+          <label className="block text-green-700 font-semibold mb-2">Manufacture Date</label>
           <input
             type="date"
             name="ManufactureDate"
-            onChange={handleChange}
             value={inputs.ManufactureDate}
-            required
-            className="w-full px-3 py-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              validationErrors.ManufactureDate ? "border-red-500" : "border-green-200"
+            }`}
           />
+          {validationErrors.ManufactureDate && <p className="text-red-500 text-sm mt-1">{validationErrors.ManufactureDate}</p>}
         </div>
 
         {/* Mushroom Type */}
         <div className="mb-4">
-          <label className="block text-green-700 font-semibold mb-2">
-            Mushroom Type
-          </label>
-          <input
-            type="text"
+          <label className="block text-green-700 font-semibold mb-2">Mushroom Type</label>
+          <select
             name="MushroomType"
-            onChange={handleChange}
             value={inputs.MushroomType}
-            required
-            className="w-full px-3 py-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
-          />
+            onChange={handleChange}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              validationErrors.MushroomType ? "border-red-500" : "border-green-200"
+            }`}
+          >
+            <option value="">-- Select Mushroom Type --</option>
+            {mushroomTypes.map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+          {validationErrors.MushroomType && <p className="text-red-500 text-sm mt-1">{validationErrors.MushroomType}</p>}
         </div>
 
-        {/* ExpireDate */}
+        {/* Expire Date (Read-Only) */}
         <div className="mb-4">
-          <label className="block text-green-700 font-semibold mb-2">
-            Expire Date
-          </label>
+          <label className="block text-green-700 font-semibold mb-2">Expire Date</label>
           <input
             type="date"
             name="ExpireDate"
-            onChange={handleChange}
             value={inputs.ExpireDate}
-            required
-            className="w-full px-3 py-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            readOnly
+            className="w-full px-3 py-2 border border-green-200 rounded-lg bg-gray-100 cursor-not-allowed focus:outline-none"
           />
         </div>
 
         {/* Unit */}
-         <div className="mb-4">
-          <label className="block text-green-700 font-semibold mb-2">
-            Number Of Packets
-          </label>
+        <div className="mb-4">
+          <label className="block text-green-700 font-semibold mb-2">Number Of Packets</label>
           <input
             type="number"
             name="Unit"
-            onChange={handleChange}
             value={inputs.Unit}
-            required
-            className="w-full px-3 py-2 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+            onChange={handleChange}
+            min="1"
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
+              validationErrors.Unit ? "border-red-500" : "border-green-200"
+            }`}
           />
+          {validationErrors.Unit && <p className="text-red-500 text-sm mt-1">{validationErrors.Unit}</p>}
         </div>
 
         {/* Buttons */}
@@ -154,17 +202,16 @@ function UpdateStock() {
             Submit
           </button>
           <button
-            type="reset"
+            type="button"
             onClick={handleReset}
             className="flex-1 bg-gray-100 text-green-800 border border-green-200 font-bold py-2 rounded-lg hover:bg-gray-200 transition"
           >
-            Clear
+            Reset
           </button>
         </div>
       </form>
     </div>
   );
 }
-
 
 export default UpdateStock;
