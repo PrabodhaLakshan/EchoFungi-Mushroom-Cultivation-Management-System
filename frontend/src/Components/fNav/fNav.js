@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from "react-router-dom";
-import { FaTachometerAlt, FaMoneyBillWave, FaRegChartBar, FaChartLine,  FaSignOutAlt } from "react-icons/fa";
+import { FaTachometerAlt, FaMoneyBillWave, FaRegChartBar, FaChartLine } from "react-icons/fa";
 
 function Nav() {
   const location = useLocation(); // for active link highlight
@@ -10,7 +10,7 @@ function Nav() {
     { icon: <FaMoneyBillWave />, label: "Payroll", path: "/payroll" },
     { icon: <FaRegChartBar />, label: "Expenses", path: "/expense" },
     { icon: <FaChartLine />, label: "Profit & Loss", path: "/profit" },
-    { icon: <FaSignOutAlt />, label: "Logout", path: "/logout" },
+    
   ];
 
   return (

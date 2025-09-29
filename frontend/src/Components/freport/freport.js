@@ -1,15 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 
 function FReport() {
   const location = useLocation();
   const navigate = useNavigate();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
-  const reportRef = useRef();
 
   const { month, year } = location.state || {};
 
@@ -38,18 +37,157 @@ function FReport() {
       .finally(() => setLoading(false));
   }, [month, year, navigate]);
 
-  const handleDownloadPDF = async () => {
-    const element = reportRef.current;
-    const canvas = await html2canvas(element, { scale: 2 });
-    const data = canvas.toDataURL("image/png");
+  // Generate Styled PDF
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
 
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(data);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const logoBase64 = "data:logo/png;;"; // your base64 logo here
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 15;
 
-    pdf.addImage(data, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Profit_Loss_${months[report.month - 1]}_${report.year}.pdf`);
+    // Page border
+    doc.setDrawColor(20, 83, 45);
+    doc.setLineWidth(2);
+    doc.rect(margin, margin, pageWidth - margin * 2, pageHeight - margin * 2);
+
+    // Header
+    doc.setFillColor(20, 83, 45);
+    doc.rect(margin + 3, margin + 3, pageWidth - (margin * 2) - 6, 30, "F");
+
+    try {
+      doc.addImage(logoBase64, "PNG", margin + 8, margin + 8, 16, 16);
+    } catch (err) {
+      doc.setFillColor(255, 255, 255);
+      doc.circle(margin + 16, margin + 16, 8, "F");
+    }
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont(undefined, "bold");
+    doc.text("EcoFungi Pvt Ltd", margin + 28, margin + 15);
+    doc.setFontSize(10);
+    doc.setFont(undefined, "normal");
+    doc.text("Financial Monitoring System", margin + 28, margin + 22);
+
+    // Date
+    const reportDate = `Generated: ${new Date().toLocaleString()}`;
+    const dateWidth = doc.getTextWidth(reportDate);
+    doc.text(reportDate, pageWidth - margin - dateWidth - 5, margin + 15);
+
+    // Title
+    doc.setTextColor(20, 83, 45);
+    doc.setFontSize(16);
+    doc.setFont(undefined, "bold");
+    doc.text("Profit & Loss Statement", margin + 5, margin + 50);
+
+    doc.setDrawColor(20, 83, 45);
+    doc.line(margin + 5, margin + 53, pageWidth - margin - 5, margin + 53);
+
+    // Summary Info
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.text(
+      `For the month of ${months[report.month - 1]} ${report.year}`,
+      margin + 5,
+      margin + 63
+    );
+
+    // Revenue Table
+    const revenueTable = [
+      ["Sales", `Rs ${report.revenue.sales.toFixed(2)}`],
+      ["Other Income", `Rs ${report.revenue.otherIncome.toFixed(2)}`],
+      ["Total Revenue", `Rs ${report.revenue.totalRevenue.toFixed(2)}`],
+    ];
+
+    autoTable(doc, {
+      head: [["Revenue Item", "Amount (Rs)"]],
+      body: revenueTable,
+      startY: margin + 70,
+      theme: "striped",
+      headStyles: {
+        fillColor: [20, 83, 45],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        halign: "right",
+        fontSize: 10,
+      },
+      columnStyles: {
+        0: { halign: "left" },
+        1: { halign: "right" },
+      },
+      margin: { left: margin + 5, right: margin + 5 },
+    });
+
+    // Expense Table
+    const expenseTable = [
+      ["Operational Expenses", `Rs ${report.expenses.expenses.toFixed(2)}`],
+      ["Salaries", `Rs ${report.expenses.salaries.toFixed(2)}`],
+      [
+        "Total Expenses",
+        `Rs ${(report.expenses.expenses + report.expenses.salaries).toFixed(2)}`,
+      ],
+    ];
+
+    autoTable(doc, {
+      head: [["Expense Item", "Amount (Rs)"]],
+      body: expenseTable,
+      startY: doc.lastAutoTable.finalY + 10,
+      theme: "striped",
+      headStyles: {
+        fillColor: [153, 27, 27],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        halign: "right",
+        fontSize: 10,
+      },
+      columnStyles: {
+        0: { halign: "left" },
+        1: { halign: "right" },
+      },
+      margin: { left: margin + 5, right: margin + 5 },
+    });
+
+    // Net Profit / Loss
+    const finalY = doc.lastAutoTable.finalY + 15;
+    const profit = report.netProfit;
+    doc.setFontSize(14);
+    doc.setFont(undefined, "bold");
+    doc.setTextColor(profit >= 0 ? 20 : 153, profit >= 0 ? 83 : 27, 45);
+    doc.text(
+      `${profit >= 0 ? "Net Profit" : "Net Loss"}: Rs ${Math.abs(
+        profit
+      ).toFixed(2)}`,
+      margin + 10,
+      finalY
+    );
+
+    // Footer
+    const footerY = pageHeight - margin - 20;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin + 5, footerY, pageWidth - margin * 2 - 10, 15, "F");
+
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(8);
+    doc.text("EcoFungi Financial Monitoring System", margin + 8, footerY + 8);
+    doc.text(
+      `Generated on ${new Date().toLocaleDateString()}`,
+      margin + 8,
+      footerY + 12
+    );
+
+    const pageText = `Page 1 of 1`;
+    const pageTextWidth = doc.getTextWidth(pageText);
+    doc.text(pageText, pageWidth - margin - pageTextWidth - 8, footerY + 10);
+
+    // Save file
+    doc.save(
+      `EcoFungi_Financial_Report_${months[report.month - 1]}_${report.year}.pdf`
+    );
   };
 
   if (loading) {
@@ -67,7 +205,7 @@ function FReport() {
       <div className="flex flex-col items-center p-10 w-full max-w-5xl">
         {/* Toolbar */}
         <div className="mb-6 flex justify-between items-center w-full">
-          <h1 className="text-2xl font-bold text-gray-800">📊 Financial Report</h1>
+          <h1 className="text-2xl font-bold text-gray-800">📑 Profit & Loss Report</h1>
           <button
             onClick={handleDownloadPDF}
             className="bg-green-700 text-white px-5 py-2 rounded-lg shadow hover:bg-green-800 transition"
@@ -76,111 +214,26 @@ function FReport() {
           </button>
         </div>
 
-        {/* Report */}
-        <div
-          ref={reportRef}
-          className="w-full bg-white p-10 rounded-xl shadow-lg border border-gray-200"
-        >
-          {/* Company Header */}
-          <div className="text-center mb-10 border-b pb-6">
-            <h2 className="text-3xl font-extrabold text-green-800">
-              EcoFungi Pvt Ltd
-            </h2>
-            <p className="text-gray-600">
-              Habaraduwa, Galle | Tel: +94 77 974 5000
-            </p>
-            <h3 className="mt-4 text-xl font-semibold text-green-700">
-              Profit & Loss Statement
-            </h3>
-            <p className="text-gray-500">
-              For {months[report.month - 1]} {report.year}
-            </p>
-          </div>
+        {/* Card */}
+        <div className="w-full bg-white p-10 rounded-xl shadow-lg border border-gray-200 text-center">
+          <h2 className="text-3xl font-extrabold text-green-800 mb-2">EcoFungi Pvt Ltd</h2>
+          <p className="text-gray-600 mb-4">
+            Habaraduwa, Galle | Tel: +94 77 974 5000
+          </p>
+          <h3 className="text-xl font-semibold text-green-700 mb-2">
+            Profit & Loss Statement
+          </h3>
+          <p className="text-gray-500 mb-6">
+            For {months[report.month - 1]} {report.year}
+          </p>
 
-          {/* Revenue Section */}
-          <div className="mb-8">
-            <h4 className="text-lg font-semibold text-green-700 mb-3">
-              Revenue
-            </h4>
-            <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
-              <tbody>
-                <tr className="border-b bg-gray-50">
-                  <td className="py-3 px-4">Sales</td>
-                  <td className="py-3 px-4 text-right font-medium">
-                    Rs {report.revenue.sales.toFixed(2)}
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Other Income</td>
-                  <td className="py-3 px-4 text-right font-medium">
-                    Rs {report.revenue.otherIncome.toFixed(2)}
-                  </td>
-                </tr>
-                <tr className="font-bold bg-green-50">
-                  <td className="py-3 px-4">Total Revenue</td>
-                  <td className="py-3 px-4 text-right">
-                    Rs {report.revenue.totalRevenue.toFixed(2)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Expenses Section */}
-          <div className="mb-8">
-            <h4 className="text-lg font-semibold text-red-700 mb-3">
-              Expenses
-            </h4>
-            <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
-              <tbody>
-                <tr className="border-b bg-gray-50">
-                  <td className="py-3 px-4">Operational Expenses</td>
-                  <td className="py-3 px-4 text-right font-medium">
-                    Rs {report.expenses.expenses.toFixed(2)}
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Salaries</td>
-                  <td className="py-3 px-4 text-right font-medium">
-                    Rs {report.expenses.salaries.toFixed(2)}
-                  </td>
-                </tr>
-                <tr className="font-bold bg-red-50">
-                  <td className="py-3 px-4">Total Expenses</td>
-                  <td className="py-3 px-4 text-right">
-                    Rs {(
-                      report.expenses.expenses + report.expenses.salaries
-                    ).toFixed(2)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Net Profit/Loss */}
-          <div
-            className={`py-5 px-6 text-center font-bold text-2xl rounded-lg mb-8 border ${
-              report.netProfit >= 0
-                ? "bg-green-100 text-green-800 border-green-300"
-                : "bg-red-100 text-red-800 border-red-300"
-            }`}
-          >
-            Net {report.netProfit >= 0 ? "Profit" : "Loss"}: Rs{" "}
-            {Math.abs(report.netProfit).toFixed(2)}
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-between text-sm text-gray-700 border-t border-gray-200 pt-4">
-            <p>
-              <strong>Prepared By:</strong> Finance Department
-            </p>
-            <p>
-              <strong>Authorized Signature:</strong> ____________________
+          <div className="mt-6 text-left">
+            <p className="text-gray-600 text-sm italic mb-2">
+              * Click "Download PDF" for official formatted report
             </p>
           </div>
         </div>
 
-        {/* Back Button */}
         <button
           onClick={() => navigate("/profit")}
           className="mt-8 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 shadow transition"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from "react-router-dom";
-import { FaPlusCircle, FaListAlt, FaChartPie, FaMoneyBillWave,FaTachometerAlt } from "react-icons/fa";
+import { FaPlusCircle, FaListAlt,  FaMoneyBillWave,FaTachometerAlt } from "react-icons/fa";
 
 function ExNav() {
   const location = useLocation(); // to highlight active link
@@ -9,7 +9,7 @@ function ExNav() {
      { icon: <FaTachometerAlt />, label: "Dashboard", path: "/finance_manager-dashboard" },
     { icon: <FaPlusCircle />, label: "Add Expenses", path: "/expense" },
     { icon: <FaListAlt />, label: "Expenses Details", path: "/exdetails" },
-    { icon: <FaChartPie />, label: "Reports", path: "/exreports" },
+    
     
   ];
 
