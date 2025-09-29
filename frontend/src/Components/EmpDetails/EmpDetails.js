@@ -28,6 +28,11 @@ function EmpDetails() {
           Employee Details
         </h1>
 
+        {/* Topic: Details for November */}
+        <h2 className="text-xl font-semibold text-blue-700 mb-4">
+          📅 Details for November
+        </h2>
+
         <div className="overflow-x-auto shadow-md rounded-lg bg-white">
           <table className="min-w-full border border-[#A5D6A7] rounded-lg">
             <thead className="bg-[#1B5E20] text-white">
@@ -41,7 +46,6 @@ function EmpDetails() {
                 <th className="px-4 py-2">Working Days</th>
                 <th className="px-4 py-2">No Pay Days</th>
                 <th className="px-4 py-2">Status</th>
-               
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-green-200">

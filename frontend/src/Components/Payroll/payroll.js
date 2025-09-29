@@ -224,8 +224,8 @@ const netSalary = Number(
     }
 
     // OT hours
-    if (toNumber(inputs.overtime.hours) < 0) {
-      newErrors.otHours = "OT Hours cannot be negative";
+    if (toNumber(inputs.overtime.hours) > 24) {
+      newErrors.otHours = "OT Hours cannot be exceed 24";
     }
 
     // OT days

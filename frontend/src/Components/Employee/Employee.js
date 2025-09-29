@@ -17,15 +17,56 @@ function Employee() {
     status: "",
   });
 
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const handleChange = (e) => {
     setInputs((prevState) => ({
       ...prevState,
       [e.target.name]: e.target.value,
     }));
+    setError(""); 
+    setSuccess("");
+  };
+
+  const validateForm = () => {
+    // Name: only alphabets & spaces
+    if (!/^[A-Za-z\s]+$/.test(inputs.name)) {
+      setError("Name should only contain letters.");
+      return false;
+    }
+
+    // Email: must contain "@" and end with ".com"
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputs.email) || !inputs.email.endsWith(".com")) {
+      setError("Email must be valid and end with .com.");
+      return false;
+    }
+
+    // Phone: must be 10 digits
+    if (!/^\d{10}$/.test(inputs.phone_number)) {
+      setError("Phone number must be exactly 10 digits.");
+      return false;
+    }
+
+    // Working days: max 31
+    if (Number(inputs.working_days) > 31) {
+      setError("Working days cannot exceed 31.");
+      return false;
+    }
+
+    // No pay days: cannot exceed working days
+    if (Number(inputs.no_pay_days) > Number(inputs.working_days)) {
+      setError("No pay days cannot be greater than working days.");
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       const res = await axios.post("http://localhost:5000/employees", {
         name: String(inputs.name),
@@ -41,10 +82,17 @@ function Employee() {
       const employeeId = res.data.employee_id;
       const formattedId = "EMP" + String(employeeId).padStart(3, "0");
       setInputs((prev) => ({ ...prev, employee_id: formattedId }));
-      navigate("/employeedetails");
+
+      setSuccess("✅ Employee added successfully!");
+      setError("");
+
+      // Delay navigation to show success message
+      setTimeout(() => {
+        navigate("/employeedetails");
+      }, 1500);
     } catch (err) {
       console.error("Error adding employee:", err);
-      alert("Failed to add employee. Please try again.");
+      setError("Failed to add employee. Please try again.");
     }
   };
 
@@ -61,6 +109,9 @@ function Employee() {
           <h2 className="text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
             👤 Add Employee
           </h2>
+
+          {error && <p className="text-red-600 mb-4">{error}</p>}
+          {success && <p className="text-green-600 mb-4">{success}</p>}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Name */}
@@ -187,7 +238,7 @@ function Employee() {
           {/* Display formatted Employee ID */}
           {inputs.employee_id && (
             <p className="mt-4 text-gray-700">
-              New Employee ID: <strong>{inputs.employee_id}</strong>
+              Employee Details added successfully
             </p>
           )}
         </div>

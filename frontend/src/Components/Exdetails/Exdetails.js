@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 // Replace this with your actual logo (base64)
-//import logo from "../../assets/logo.png"; // or use base64 inline
+import logo from "../../assets/logo.png"; 
 
 const URL = "http://localhost:5000/expenses";
 
@@ -74,11 +74,17 @@ function Exdetails() {
     doc.setFillColor(20, 83, 45);
     doc.rect(margin + 3, margin + 3, pageWidth - (margin * 2) - 6, 30, "F");
 
-    /*try {
-      doc.addImage(logo, "PNG", margin + 8, margin + 8, 16, 16);
+    try {
+    // Calculate header area height (30px high from your code)
+    const headerHeight = 30;
+    const logoSize = 18; // slightly larger for clarity
+    const logoX = margin + 10;
+    const logoY = margin + 3 + (headerHeight - logoSize) / 2; // vertically centered
+
+    doc.addImage(logo, "PNG", logoX, logoY, logoSize, logoSize);
     } catch {
-      // skip if no logo
-    }*/
+      // if logo fails to load, skip silently
+    }
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
