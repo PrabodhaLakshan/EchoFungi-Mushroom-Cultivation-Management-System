@@ -76,45 +76,53 @@ function IntReport() {
       : "N/A";
 
     // HEADER
-    const addHeader = () => {
-      const headerHeight = 60;
+   const logoBase64 = "logo.png"; 
 
-      // Green rectangle top banner
-      doc.setFillColor(34, 139, 34);
-      doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
+  const addHeader = () => {
+    const headerHeight = 60;
 
-      // Left-aligned company info
-      doc.setFontSize(16);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.text("EcoFungi", margin + 15, 50);
+    
+    doc.setFillColor(34, 139, 34);
+    doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
 
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text("Inventory Management System", margin + 15, 65);
+    
+doc.addImage(logoBase64, "PNG", margin + 5, 35, 35, 35); 
 
-      // Right-aligned date & time
+const textY = 50; 
+
+
+doc.setFontSize(16);
+doc.setTextColor(255, 255, 255);
+doc.setFont("helvetica", "bold");
+doc.text("EcoFungi", margin + 50, textY);
+
+
+doc.setFontSize(10);
+doc.setFont("helvetica", "normal");
+doc.text("Inventory Management System", margin + 50, textY + 15);
+
+      
       doc.setFontSize(10);
       doc.text(`Generated on: ${formattedDate} at ${formattedTime}`, pageWidth - margin - 180, 50);
 
-      // Report title - left aligned
+      
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0);
       doc.text("Inventory Movement Report", margin, 110);
 
-      // Horizontal line under report title
+      
       doc.setDrawColor(0);
       doc.setLineWidth(0.5);
       doc.line(margin, 120, pageWidth - margin, 120);
 
-      // Total Records and Period - LEFT aligned under line
+      
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.text(`Total Records: ${filteredItems.length}`, margin, 135);
       doc.text(`Report Period: ${reportPeriod}`, margin, 150);
 
-      // Outer border
+      
       doc.setDrawColor(34, 139, 34);
       doc.setLineWidth(1);
       doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);

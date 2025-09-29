@@ -4,7 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import SupplyNav from "../SupplyNav/SupplyNav";
 
 function UpdateSupplier() {
-  const [inputs, setInputs] = useState({});
+  const [inputs, setInputs] = useState({
+    Supplier_id: '',
+    Supplier_name: '',
+    Phone_number: '',
+    Email: '',
+    Address: ''
+  });
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const { id } = useParams();
@@ -15,7 +21,13 @@ function UpdateSupplier() {
       try {
         const res = await axios.get(`http://localhost:5000/suppliers/${id}`);
         if (res.data && res.data.suppliers) {
-          setInputs(res.data.suppliers);
+          setInputs({
+            Supplier_id: res.data.suppliers.Supplier_id || '',
+            Supplier_name: res.data.suppliers.Supplier_name || '',
+            Phone_number: res.data.suppliers.Phone_number?.toString() || '',
+            Email: res.data.suppliers.Email || '',
+            Address: res.data.suppliers.Address || ''
+          });
         }
       } catch (err) {
         console.error("Error fetching supplier:", err);
@@ -24,7 +36,7 @@ function UpdateSupplier() {
     fetchSupplier();
   }, [id]);
 
-  // Change handler
+  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -33,11 +45,14 @@ function UpdateSupplier() {
 
     setInputs(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
+
+    // Remove existing error on change
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  // Validation function
+  // Validation
   const validate = () => {
     const newErrors = {};
 
@@ -49,11 +64,10 @@ function UpdateSupplier() {
     }
 
     // Phone Number
-   const phone = inputs.Phone_number?.toString().trim();
-if (!/^0\d{9}$/.test(phone)) {
-  newErrors.Phone_number = "Phone number must start with 0 and be exactly 10 digits.";
-}
-
+    const phone = inputs.Phone_number?.toString().trim();
+    if (!/^0\d{9}$/.test(phone)) {
+      newErrors.Phone_number = "Phone number must start with 0 and be exactly 10 digits.";
+    }
 
     // Email
     const email = inputs.Email?.trim();
@@ -77,23 +91,21 @@ if (!/^0\d{9}$/.test(phone)) {
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validate()) return;
 
     try {
       await axios.put(`http://localhost:5000/suppliers/${id}`, {
-        Supplier_id: inputs.Supplier_id,
         Supplier_name: inputs.Supplier_name,
         Phone_number: inputs.Phone_number,
         Email: inputs.Email,
         Address: inputs.Address
       });
 
-      alert("✅ Supplier updated successfully!"); // Success alert
+      alert("✅ Supplier updated successfully!");
       navigate("/supplierdetails");
     } catch (err) {
       console.error("Update failed:", err);
-      alert("❌ Failed to update supplier. Please try again."); // Error alert
+      alert("❌ Failed to update supplier. Please try again.");
     }
   };
 
@@ -107,16 +119,15 @@ if (!/^0\d{9}$/.test(phone)) {
           
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Supplier ID */}
+            {/* Supplier ID (read-only) */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Supplier ID</label>
               <input
                 type="text"
                 name="Supplier_id"
-                value={inputs.Supplier_id || ""}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={inputs.Supplier_id}
+                readOnly
+                className="w-full px-4 py-2 border border-gray-300 rounded bg-gray-100 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -126,9 +137,8 @@ if (!/^0\d{9}$/.test(phone)) {
               <input
                 type="text"
                 name="Supplier_name"
-                value={inputs.Supplier_name || ""}
+                value={inputs.Supplier_name}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               {errors.Supplier_name && (
@@ -142,14 +152,11 @@ if (!/^0\d{9}$/.test(phone)) {
               <input
                 type="text"
                 name="Phone_number"
-                value={inputs.Phone_number || ""}
+                value={inputs.Phone_number}
                 onChange={handleChange}
-                required
                 maxLength="10"
                 className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 ${
-                  errors.Phone_number
-                    ? "border-red-500 focus:ring-red-400"
-                    : "border-gray-300 focus:ring-blue-400"
+                  errors.Phone_number ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
                 }`}
               />
               {errors.Phone_number && (
@@ -163,9 +170,8 @@ if (!/^0\d{9}$/.test(phone)) {
               <input
                 type="email"
                 name="Email"
-                value={inputs.Email || ""}
+                value={inputs.Email}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               {errors.Email && (
@@ -178,7 +184,7 @@ if (!/^0\d{9}$/.test(phone)) {
               <label className="block text-gray-700 font-medium mb-1">Address</label>
               <textarea
                 name="Address"
-                value={inputs.Address || ""}
+                value={inputs.Address}
                 onChange={handleChange}
                 rows="3"
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -192,9 +198,9 @@ if (!/^0\d{9}$/.test(phone)) {
             <div className="text-center">
               <button
                 type="submit"
-                className="px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-blue-700 transition duration-200"
+                className="px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition duration-200"
               >
-                Update 
+                Update
               </button>
             </div>
 

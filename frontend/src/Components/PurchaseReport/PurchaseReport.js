@@ -66,28 +66,44 @@ function PurchaseReport() {
     doc.rect(borderMargin, borderMargin, pageWidth - 2 * borderMargin, pageHeight - 2 * borderMargin);
 
     // 🟩 Header
+
+    const logoBase64 = "logo.png";
     const headerHeight = 30;
-const headerInset = 3; // ⬅️ distance between header and page border
+const headerInset = 3;
 
-doc.setFillColor(34, 139, 34); // dark green
 
+const logoSize = 12; 
+const logoX = borderMargin + headerInset + 5; 
+const logoY = borderMargin + 10; 
+
+
+doc.setFillColor(34, 139, 34); 
 doc.rect(
-  borderMargin + headerInset, // X-position (pushed inward)
-  borderMargin + 2,           // Y-position
-  pageWidth - 2 * (borderMargin + headerInset), // Reduced width
+  borderMargin + headerInset, 
+  borderMargin + 2,           
+  pageWidth - 2 * (borderMargin + headerInset),
   headerHeight,
   "F"
 );
 
 
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("EcoFungi", contentMargin, borderMargin + 18);
+doc.addImage(logoBase64, "PNG", logoX, logoY, logoSize, logoSize);
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Inventory Management System", contentMargin, borderMargin + 26);
+
+const textStartX = logoX + logoSize + 3; 
+const textBaseY = borderMargin + 20; 
+
+
+doc.setTextColor(255, 255, 255);
+doc.setFontSize(16);
+doc.setFont("helvetica", "bold");
+doc.text("EcoFungi", textStartX, textBaseY);
+
+
+doc.setFontSize(10);
+doc.setFont("helvetica", "normal");
+doc.text("Inventory Management System", textStartX, textBaseY + 8);
+
 
     doc.setFontSize(9);
     doc.text(generatedText, pageWidth - contentMargin - 70, borderMargin + 26);

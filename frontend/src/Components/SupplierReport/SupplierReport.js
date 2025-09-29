@@ -41,111 +41,116 @@ function SupplierReport() {
     );
     setFilteredSuppliers(filtered);
   }, [searchQuery, suppliers]);
+const generatePDF = () => {
+  const doc = new jsPDF("p", "pt", "a4");
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
 
-  // Generate PDF with header and footer
-  const generatePDF = () => {
-    const doc = new jsPDF("p", "pt", "a4");
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 40;
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString();
+  const formattedTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString();
-    const formattedTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  // Your logo in base64
+  const logoBase64 = "logo.png"; // put your full base64 here
 
-    // Header
-    const addHeader = () => {
-      const headerHeight = 60;
+  const addHeader = () => {
+    const headerHeight = 60;
 
-      // Green rectangle
-      doc.setFillColor(34, 139, 34);
-      doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
+    // Green rectangle
+    doc.setFillColor(34, 139, 34);
+    doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
 
-      // Left: Company info
-      doc.setFontSize(16);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.text("EcoFungi", margin + 15, 50);
+    // Logo on left
+   // Place logo slightly lower and aligned with text
+doc.addImage(logoBase64, "PNG", margin + 5, 35, 35, 35); 
+// X = margin + 5, Y = 35, Width = 35, Height = 35
 
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text("Inventory Management System", margin + 15, 65);
+// Company name next to logo (aligned to same row)
+const textY = 50; // same vertical center as the logo
 
-      // Right: Date & time
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${formattedDate} at ${formattedTime}`, pageWidth - margin - 180, 50);
+// "EcoFungi" - bold and large
+doc.setFontSize(16);
+doc.setTextColor(255, 255, 255);
+doc.setFont("helvetica", "bold");
+doc.text("EcoFungi", margin + 50, textY);
 
-      // Report title
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0);
-      doc.text("Supplier Report", margin, 110);
+// Subtitle - below main title but still aligned with logo
+doc.setFontSize(10);
+doc.setFont("helvetica", "normal");
+doc.text("Inventory Management System", margin + 50, textY + 15);
 
-      // Line below title
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      doc.line(margin, 120, pageWidth - margin, 120);
 
-      // Total records
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Total Suppliers: ${filteredSuppliers.length}`, margin, 135);
+    // Right: Date & time
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${formattedDate} at ${formattedTime}`, pageWidth - margin - 180, 50);
 
-      // Border around the page
-      doc.setDrawColor(34, 139, 34);
-      doc.setLineWidth(1);
-      doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);
-    };
+    // Report title
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
+    doc.text("Supplier Report", margin, 110);
 
-    // Footer
-    const addFooter = (pageNumber) => {
-      const footerY = pageHeight - 35;
+    // Line below title
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 120, pageWidth - margin, 120);
 
-      // Line above footer
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      doc.line(margin, footerY - 15, pageWidth - margin, footerY - 15);
+    // Total records
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Total Suppliers: ${filteredSuppliers.length}`, margin, 135);
 
-      doc.setFontSize(8);
-      doc.setTextColor(90);
-      doc.text(
-        "Note: This report contains supplier records managed by the EcoFungi system.",
-        margin,
-        footerY
-      );
-      doc.text("For inquiries, please contact the system administrator.", margin, footerY + 10);
-
-      // Page number
-      doc.text(`Page ${pageNumber}`, pageWidth - margin - 30, footerY + 10);
-    };
-
-    addHeader();
-
-    // Table
-    autoTable(doc, {
-      startY: 160,
-      head: [["Supplier ID", "Supplier Name", "Contact Number", "Email", "Address"]],
-      body: filteredSuppliers.length
-        ? filteredSuppliers.map((sup) => [
-            sup.Supplier_id,
-            sup.Supplier_name,
-            sup.Phone_number,
-            sup.Email,
-            sup.Address,
-          ])
-        : [["No data available", "", "", "", ""]],
-      styles: { fontSize: 9, halign: "center" },
-      headStyles: { fillColor: [34, 139, 34], textColor: 255, fontStyle: "bold" },
-      didDrawPage: (data) => {
-        const pageNumber = doc.internal.getNumberOfPages();
-        addHeader();
-        addFooter(pageNumber);
-      },
-      margin: { left: margin, right: margin },
-    });
-
-    doc.save(`Supplier_Report_${now.toISOString().split("T")[0]}.pdf`);
+    // Border around the page
+    doc.setDrawColor(34, 139, 34);
+    doc.setLineWidth(1);
+    doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);
   };
+
+  const addFooter = (pageNumber) => {
+    const footerY = pageHeight - 35;
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(margin, footerY - 15, pageWidth - margin, footerY - 15);
+
+    doc.setFontSize(8);
+    doc.setTextColor(90);
+    doc.text(
+      "Note: This report contains supplier records managed by the EcoFungi system.",
+      margin,
+      footerY
+    );
+    doc.text("For inquiries, please contact the system administrator.", margin, footerY + 10);
+
+    doc.text(`Page ${pageNumber}`, pageWidth - margin - 30, footerY + 10);
+  };
+
+  addHeader();
+
+  autoTable(doc, {
+    startY: 160,
+    head: [["Supplier ID", "Supplier Name", "Contact Number", "Email", "Address"]],
+    body: filteredSuppliers.length
+      ? filteredSuppliers.map((sup) => [
+          sup.Supplier_id,
+          sup.Supplier_name,
+          sup.Phone_number,
+          sup.Email,
+          sup.Address,
+        ])
+      : [["No data available", "", "", "", ""]],
+    styles: { fontSize: 9, halign: "center" },
+    headStyles: { fillColor: [34, 139, 34], textColor: 255, fontStyle: "bold" },
+    didDrawPage: (data) => {
+      const pageNumber = doc.internal.getNumberOfPages();
+      addHeader();
+      addFooter(pageNumber);
+    },
+    margin: { left: margin, right: margin },
+  });
+
+  doc.save(`Supplier_Report_${now.toISOString().split("T")[0]}.pdf`);
+};
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
