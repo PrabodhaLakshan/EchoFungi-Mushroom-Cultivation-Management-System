@@ -16,6 +16,7 @@ import EnvironmentHistory from './Components/EnvironmentHistory/EnvironmentH';
 import UpdateSchedule from './Components/Manual Control/UpdateSchedule';
 import ProfilePage from './Components/Profile/ProfilePage';
 import Home from './Components/Home/Home';
+import Waiting from './Components/waiting/waiting';
 
 
 
@@ -106,7 +107,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Navigate to="/" />} /> 
         <Route path="/register" element={<Register />} />
-        <Route path="/waiting" element={<div>Waiting for role assignment...</div>} />
+        <Route path="/waiting" element={<Waiting/>} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/Environment_Manager-dashboard" element={<EnvironmentM />} />
          <Route path="/history" element={<EnvironmentHistory />} />
