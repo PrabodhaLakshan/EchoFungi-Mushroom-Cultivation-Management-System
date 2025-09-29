@@ -23,13 +23,37 @@ const Register = () => {
     setError('');
     setSuccess('');
 
-    // Validation
-    if (!formData.name || !formData.email || !formData.age || !formData.address || !formData.password) {
+    const { name, email, age, address, password } = formData;
+
+    // Required fields check
+    if (!name || !email || !age || !address || !password) {
       setError('All fields are required');
       return;
     }
-    if (!/^\d+$/.test(formData.age)) {
+
+    // Age validation
+    if (!/^\d+$/.test(age)) {
       setError('Age must be a number');
+      return;
+    }
+
+    // Name validation: letters and spaces, min 2 characters
+    if (!/^[A-Za-z\s]{2,}$/.test(name)) {
+      setError('Name must contain only letters and at least 2 characters');
+      return;
+    }
+
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Password validation: min 8 chars, uppercase, lowercase, number, special char
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(password)) {
+      setError(
+        'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character'
+      );
       return;
     }
 
@@ -48,7 +72,7 @@ const Register = () => {
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
-        style={{ backgroundImage: "url('/mushreg.jpg')" }} // ✅ Real photo in public folder
+        style={{ backgroundImage: "url('/mushreg.jpg')" }}
       >
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
       </div>
@@ -71,6 +95,7 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name */}
           <div>
             <label className="block mb-1 text-sm font-medium text-white">Name</label>
             <input
@@ -83,6 +108,7 @@ const Register = () => {
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="block mb-1 text-sm font-medium text-white">Email</label>
             <input
@@ -95,6 +121,7 @@ const Register = () => {
             />
           </div>
 
+          {/* Age */}
           <div>
             <label className="block mb-1 text-sm font-medium text-white">Age</label>
             <input
@@ -107,6 +134,7 @@ const Register = () => {
             />
           </div>
 
+          {/* Address */}
           <div>
             <label className="block mb-1 text-sm font-medium text-white">Address</label>
             <input
@@ -119,6 +147,7 @@ const Register = () => {
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block mb-1 text-sm font-medium text-white">Password</label>
             <input
