@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from '../Header/Header';
 import axios from 'axios';
 import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Emonitoring from '../Monitoring Section/Emonitoring';
 import Acontrol from '../Automatic Control/Acontrol';
 import Mcontrol from '../Manual Control/Mcontrol';
@@ -18,33 +19,106 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
         setActiveSection(section);
     };
 
+    // Animation variants for page transitions
+    const pageVariants = {
+        initial: {
+            opacity: 0,
+            x: -50,
+        },
+        in: {
+            opacity: 1,
+            x: 0,
+        },
+        out: {
+            opacity: 0,
+            x: 50,
+        }
+    };
+
+    const pageTransition = {
+        type: "tween",
+        ease: "anticipate",
+        duration: 0.4
+    };
+
     const renderContent = () => {
         switch (activeSection) {
             case 'monitoring':
                 return (
-                    <Emonitoring 
-                        temp={temp} 
-                        humidity={humidity} 
-                        minTemp={minTemp} 
-                        maxTemp={maxTemp}
-                        dataHistory={dataHistory}
-                    />
+                    <motion.div
+                        key="monitoring"
+                        initial="initial"
+                        animate="in"
+                        exit="out"
+                        variants={pageVariants}
+                        transition={pageTransition}
+                    >
+                        <Emonitoring 
+                            temp={temp} 
+                            humidity={humidity} 
+                            minTemp={minTemp} 
+                            maxTemp={maxTemp}
+                            dataHistory={dataHistory}
+                        />
+                    </motion.div>
                 );
             case 'automatic':
-                return <Acontrol />;
+                return (
+                    <motion.div
+                        key="automatic"
+                        initial="initial"
+                        animate="in"
+                        exit="out"
+                        variants={pageVariants}
+                        transition={pageTransition}
+                    >
+                        <Acontrol />
+                    </motion.div>
+                );
             case 'manual':
-                return <Mcontrol />;
+                return (
+                    <motion.div
+                        key="manual"
+                        initial="initial"
+                        animate="in"
+                        exit="out"
+                        variants={pageVariants}
+                        transition={pageTransition}
+                    >
+                        <Mcontrol />
+                    </motion.div>
+                );
             case 'history':
-                return <EnvironmentH />;
+                return (
+                    <motion.div
+                        key="history"
+                        initial="initial"
+                        animate="in"
+                        exit="out"
+                        variants={pageVariants}
+                        transition={pageTransition}
+                    >
+                        <EnvironmentH />
+                    </motion.div>
+                );
             default:
                 return (
-                    <Emonitoring 
-                        temp={temp} 
-                        humidity={humidity} 
-                        minTemp={minTemp} 
-                        maxTemp={maxTemp}
-                        dataHistory={dataHistory}
-                    />
+                    <motion.div
+                        key="default"
+                        initial="initial"
+                        animate="in"
+                        exit="out"
+                        variants={pageVariants}
+                        transition={pageTransition}
+                    >
+                        <Emonitoring 
+                            temp={temp} 
+                            humidity={humidity} 
+                            minTemp={minTemp} 
+                            maxTemp={maxTemp}
+                            dataHistory={dataHistory}
+                        />
+                    </motion.div>
                 );
         }
     };
@@ -268,8 +342,12 @@ function EnvironmentM({ temp, humidity, minTemp, maxTemp, dataHistory = [] }) {
       </div>
     </div>
 
-    {/* Right Content Area */}
-    <div className="flex-1 p-8 ml-64">{renderContent()}</div>
+    {/* Right Content Area with AnimatePresence */}
+    <div className="flex-1 p-8 ml-64">
+      <AnimatePresence mode="wait">
+        {renderContent()}
+      </AnimatePresence>
+    </div>
   </div>
 </div>
 

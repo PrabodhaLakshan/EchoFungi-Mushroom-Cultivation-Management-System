@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -41,6 +42,11 @@ const Login = () => {
     }
   };
 
+  const handleRegisterClick = (e) => {
+    e.preventDefault();
+    navigate('/register');
+  };
+
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4">
       {/* Background Image */}
@@ -54,8 +60,18 @@ const Login = () => {
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
       </div>
 
-      {/* Transparent Form */}
-      <div className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-md p-8 rounded-xl shadow-2xl">
+      {/* Transparent Form with Rotate Animation */}
+      <motion.div
+        initial={{ opacity: 0, rotateY: -90, scale: 0.8 }}
+        animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+        exit={{ opacity: 0, rotateY: 90, scale: 0.8 }}
+        transition={{ 
+          duration: 0.6,
+          ease: "easeInOut"
+        }}
+        className="relative z-10 w-full max-w-md bg-white/20 backdrop-blur-md p-8 rounded-xl shadow-2xl"
+        style={{ transformStyle: 'preserve-3d' }}
+      >
         <h2 className="text-3xl font-bold text-center text-white mb-6">
           Mushroom Cultivation Login
         </h2>
@@ -107,12 +123,13 @@ const Login = () => {
           Don't have an account?{' '}
           <a
             href="/register"
+            onClick={handleRegisterClick}
             className="text-green-300 hover:underline font-medium"
           >
             Register here
           </a>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };
