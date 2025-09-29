@@ -98,6 +98,7 @@ function InventoryDashboard() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Fixed Sidebar */}
+      
       <div className="w-52 fixed top-0 left-0 h-screen overflow-y-auto">
         <MainIntNav />
       </div>

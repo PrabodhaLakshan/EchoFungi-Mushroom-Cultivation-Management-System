@@ -10,7 +10,7 @@ function UpdatePurchase() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // ✅ Fetch current purchase
+  // Fetch current purchase
   useEffect(() => {
     const fetchPurchase = async () => {
       try {
@@ -24,8 +24,9 @@ function UpdatePurchase() {
 
           setInputs({
             ...purchase,
-            Supplier_id: purchase.supplier?._id || purchase.Supplier_id, // use MongoDB _id
+            Supplier_id: purchase.supplier?._id || purchase.Supplier_id,
             Purchase_date: formattedDate,
+            Price: purchase.Price?.toString() || "",
           });
         }
       } catch (err) {
@@ -35,7 +36,7 @@ function UpdatePurchase() {
     fetchPurchase();
   }, [id]);
 
-  // ✅ Fetch suppliers
+  // Fetch suppliers
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
@@ -50,14 +51,14 @@ function UpdatePurchase() {
     fetchSuppliers();
   }, []);
 
-  // ✅ Handle input change
+  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setInputs((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  // ✅ Validation
+  // Validation
   const validate = () => {
     const newErrors = {};
     if (!inputs.Supplier_id) newErrors.Supplier_id = "Supplier is required.";
@@ -71,7 +72,7 @@ function UpdatePurchase() {
     } else if (new Date(inputs.Purchase_date) > new Date()) {
       newErrors.Purchase_date = "Purchase date cannot be in the future.";
     }
-    if (inputs.Price === "") {
+    if (inputs.Price === "" || inputs.Price === undefined) {
       newErrors.Price = "Price is required.";
     } else {
       const priceRegex = /^\d+(\.\d{1,2})?$/;
@@ -84,7 +85,7 @@ function UpdatePurchase() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Submit handler
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -131,7 +132,7 @@ function UpdatePurchase() {
             {/* Supplier */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">
-                Supplier ID
+                Supplier
               </label>
               <select
                 name="Supplier_id"
@@ -141,8 +142,8 @@ function UpdatePurchase() {
               >
                 <option value="">-- Select Supplier --</option>
                 {suppliers.map((sup) => (
-                  <option key={sup.Supplier_id} value={sup.Supplier_id}>
-                     ({sup.Supplier_id})
+                  <option key={sup._id} value={sup.Supplier_id}>
+                    ({sup.Supplier_id})
                   </option>
                 ))}
               </select>
@@ -195,6 +196,7 @@ function UpdatePurchase() {
                 name="Price"
                 value={inputs.Price || ""}
                 onChange={handleChange}
+                step="0.01"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               />
               {errors.Price && (
