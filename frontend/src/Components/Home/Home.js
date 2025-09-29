@@ -154,6 +154,7 @@ const EchoFungiHomepage = () => {
                 { icon: '📅',title: 'Schedule Management',desc: 'Plan watering, spraying, and harvesting schedules for each batch.' },
                 { icon: '📦', title: 'Packet Tracking', desc: 'Easily record daily mushroom packet output with just a few clicks.' },
                 { icon: '🌡️', title: 'Climate Control', desc: 'Monitor live temperature & humidity for ideal growing conditions.' },
+                
                 { icon: '📊',title: 'Inventory Management',desc: 'Monitor stock levels of mushroom packets and supplies in real-time.'},
                 { icon: '💰', title: 'Finance Reports', desc: 'Track your farm’s expenses vs earnings with automated reports.' },
                 { icon: '💵', title: 'Sales Tracking',desc: 'Track mushroom packet sales, shop distributions, and payment balances easily.'},
@@ -178,6 +179,40 @@ const EchoFungiHomepage = () => {
             </div>
           </div>
         </div>
+
+
+
+         
+      {/* How It Works Section */}
+<section className="my-12 max-w-7xl mx-auto px-6 lg:px-8">
+  <div className="flex flex-col md:flex-row items-center gap-8">
+    {/* Text Left */}
+    <div className="md:w-1/2 text-left">
+      <h2 className="text-2xl md:text-3xl font-bold text-green-900 mb-4">
+        How EchoFungi Works
+      </h2>
+      <p className="text-gray-700 text-sm md:text-base leading-relaxed">
+        Learn how our Mushroom Cultivation Management system helps you Control Environment.
+      </p>
+    </div>
+
+    {/* Video Right */}
+    <div className="md:w-1/2">
+      <video
+        src="/videos/intro.mp4"
+        autoPlay
+        loop
+        muted
+        className="w-full h-auto rounded-lg shadow-lg"
+      />
+    </div>
+  </div>
+</section>
+
+
+
+
+
 
 
       {/* About Section */}
@@ -224,38 +259,7 @@ const EchoFungiHomepage = () => {
         </div>
       </div>
 
-      {/* Impact Section */}
-      <div
-        ref={impactRef}
-        className={`bg-gray-50 py-20 transition-all duration-1000 transform ${
-          impactVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-extrabold text-center text-green-800 mb-12">
-            Our Impact in Numbers 🌍
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {[
-  
-              { icon: '🍄', number: 1000000, suffix: '+', label: 'Packets Produced' },
-              { icon: '✅', number: 95, suffix: '%', label: 'Quality Assurance' },
-           
-            ].map((stat, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-md hover:shadow-xl p-8 text-center transition-transform duration-300 transform hover:-translate-y-2">
-                <div className="w-16 h-16 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto text-3xl mb-6 shadow-sm">
-                  {stat.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-green-800 mb-3">
-                  <CountUp end={stat.number} duration={2} separator="," />{stat.suffix}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+     
 
       {/* Footer */}
    <footer className="bg-green-900 text-gray-100">
