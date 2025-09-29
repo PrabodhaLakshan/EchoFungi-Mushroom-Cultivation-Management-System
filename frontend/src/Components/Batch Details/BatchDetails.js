@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useReactToPrint } from "react-to-print";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable"; // ✅ correct import
 import BatchNav from "../BatchNav/BatchNav";
 
 const URL = "http://localhost:5000/batches";
@@ -24,12 +26,14 @@ function BatchDetails() {
     });
   }, []);
 
+  // Print
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     documentTitle: "Batch Report",
     onAfterPrint: () => alert("Batch Report Successfully Downloaded! ✅"),
   });
 
+  // Search
   const handleSearch = () => {
     fetchHandler().then((data) => {
       const filteredBatches = data.batches.filter((batch) =>
@@ -42,6 +46,7 @@ function BatchDetails() {
     });
   };
 
+  // WhatsApp
   const handleSendReport = () => {
     const phoneNumber = "+94718943262";
     const message = `Selected Batch Reports`;
@@ -57,6 +62,42 @@ function BatchDetails() {
       await axios.delete(`${URL}/${id}`);
       setBatches((prev) => prev.filter((batch) => batch._id !== id));
     }
+  };
+
+  // PDF Download
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Batch Report", 14, 15);
+
+    const tableData = batches.map((batch, i) => [
+      i + 1,
+      batch._id,
+      new Date(batch.createDate).toLocaleDateString(),
+      new Date(batch.expireDate).toLocaleDateString(),
+      batch.status,
+      batch.quantity,
+      batch.removedQuantity,
+    ]);
+
+    autoTable(doc, {
+      head: [
+        [
+          "#",
+          "Batch ID",
+          "Create Date",
+          "Expire Date",
+          "Status",
+          "Quantity",
+          "Removed",
+        ],
+      ],
+      body: tableData,
+      startY: 25,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [0, 102, 204] }, // blue header
+    });
+
+    doc.save("Batch_Report.pdf");
   };
 
   return (
@@ -163,11 +204,12 @@ function BatchDetails() {
         {/* Action Buttons (hidden in print) */}
         <div className="flex justify-end gap-4 mt-8 print:hidden">
           <button
-            onClick={handlePrint}
+            onClick={handleDownloadPDF}
             className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
           >
-            Download Report
+            Download PDF Report
           </button>
+
           <button
             onClick={handleSendReport}
             className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"

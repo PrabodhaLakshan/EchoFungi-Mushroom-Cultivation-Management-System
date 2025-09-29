@@ -13,7 +13,10 @@ function Nav() {
   ];
 
   return (
+    <div>
+      
     <div className="h-screen w-64 bg-green-900 text-white flex flex-col shadow-lg fixed left-0 top-0">
+     
       {/* Brand / Logo */}
       <div className="px-6 py-4 text-2xl font-bold border-b border-green-700">
         Dashboard
@@ -37,6 +40,7 @@ function Nav() {
           </li>
         ))}
       </ul>
+    </div>
     </div>
   );
 }
