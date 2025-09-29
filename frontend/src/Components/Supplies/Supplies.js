@@ -82,7 +82,7 @@ function Supplies() {
     type="text"
     value={searchQuery}
     onChange={(e) => setSearchQuery(e.target.value)}
-    placeholder="🔎 Search by Purchase ID..."
+    placeholder="🔎 Search by Supplier ID..."
     className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
   />
 </div>
