@@ -57,10 +57,12 @@ function UpdateSupplier() {
     const newErrors = {};
 
     // Supplier Name
-    if (!inputs.Supplier_name?.trim()) {
+    if (!inputs.Supplier_name.trim()) {
       newErrors.Supplier_name = "Supplier name is required.";
     } else if (inputs.Supplier_name.length < 2) {
       newErrors.Supplier_name = "Supplier name must be at least 2 characters.";
+    } else if (!/^[A-Za-z\s.]+$/.test(inputs.Supplier_name)) {
+      newErrors.Supplier_name = "Supplier name can contain letters, spaces, and dots only.";
     }
 
     // Phone Number
