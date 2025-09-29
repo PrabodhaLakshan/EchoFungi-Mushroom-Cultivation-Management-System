@@ -5,7 +5,7 @@ import Navbar from "../Navbar/Nav";
 import { Link } from "react-router-dom";
 import { FaSearch, FaFilePdf } from "react-icons/fa";
 
-const URL = "http://localhost:5000/api/orders"; // ✅ use the protected API route
+const URL = "http://localhost:5000/api/orders"; // ✅ Protected API route
 
 // Get token from localStorage
 const getToken = () => localStorage.getItem("token");
@@ -14,9 +14,7 @@ const getToken = () => localStorage.getItem("token");
 const fetchHandler = async () => {
   const token = getToken();
   return await axios
-    .get(URL, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    .get(URL, { headers: { Authorization: `Bearer ${token}` } })
     .then((res) => res.data);
 };
 
@@ -80,7 +78,6 @@ function Order() {
                     headers: { Authorization: `Bearer ${token}` },
                     responseType: "blob",
                   });
-                  // Download PDF
                   const url = window.URL.createObjectURL(new Blob([response.data]));
                   const link = document.createElement("a");
                   link.href = url;
