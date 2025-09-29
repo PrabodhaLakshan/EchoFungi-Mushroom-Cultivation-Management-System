@@ -1,7 +1,7 @@
 import React from "react";
 import { UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../../assets/logo.png"; // Adjust the path as necessary
+import Logo from "../../assets/logo.png"; 
 
 const Header = () => {
   const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};

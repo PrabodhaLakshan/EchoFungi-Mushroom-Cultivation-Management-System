@@ -15,6 +15,7 @@ import Mcontrol from './Components/Manual Control/Mcontrol';
 import EnvironmentHistory from './Components/EnvironmentHistory/EnvironmentH';
 import UpdateSchedule from './Components/Manual Control/UpdateSchedule';
 import ProfilePage from './Components/Profile/ProfilePage';
+import Home from './Components/Home/Home';
 
 
 
@@ -101,7 +102,8 @@ function App() {
     <div>
      <React.Fragment>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Navigate to="/" />} /> 
         <Route path="/register" element={<Register />} />
         <Route path="/waiting" element={<div>Waiting for role assignment...</div>} />
