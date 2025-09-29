@@ -154,10 +154,11 @@ const EchoFungiHomepage = () => {
                 { icon: '📅',title: 'Schedule Management',desc: 'Plan watering, spraying, and harvesting schedules for each batch.' },
                 { icon: '📦', title: 'Packet Tracking', desc: 'Easily record daily mushroom packet output with just a few clicks.' },
                 { icon: '🌡️', title: 'Climate Control', desc: 'Monitor live temperature & humidity for ideal growing conditions.' },
-                
+                  {icon: '🧾', title: 'Salary Report',desc: 'Manage staff salary records, calculate payments, and generate detailed reports.'},
                 { icon: '📊',title: 'Inventory Management',desc: 'Monitor stock levels of mushroom packets and supplies in real-time.'},
                 { icon: '💰', title: 'Finance Reports', desc: 'Track your farm’s expenses vs earnings with automated reports.' },
                 { icon: '💵', title: 'Sales Tracking',desc: 'Track mushroom packet sales, shop distributions, and payment balances easily.'},
+                 { icon: '📦',title: 'Stock Tracking',desc: 'Monitor stock levels of mushroom packets and raw materials in real-time.' },
 
               ].map((feature, index) => (
                 <div
