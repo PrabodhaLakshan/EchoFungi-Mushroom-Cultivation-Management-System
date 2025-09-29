@@ -160,22 +160,27 @@ function Mcontrol() {
     const checkSchedules = () => {
       const currentTime = new Date();
       const currentDay = currentTime.toLocaleString('en-us', { weekday: 'long' }).toLowerCase();
-      const currentTimeStr = currentTime.toISOString().split('T')[1].slice(0, 5);  
+      const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
+      let shouldTurnOn = false;
       schedules.forEach(schedule => {
-        if (schedule.day === currentDay || schedule.day === 'Every Day') {
-          if (schedule.stime === currentTimeStr) {
-            controlRelay(true);  
-          }
-          if (schedule.endtime === currentTimeStr) {
-            controlRelay(false);  
+        const scheduleDay = (schedule.day || '').toLowerCase();
+        if (scheduleDay === currentDay || scheduleDay === 'every day') {
+          // Convert schedule times to minutes
+          const startParts = (schedule.stime || '00:00').split(':');
+          const endParts = (schedule.endtime || '00:00').split(':');
+          const startMinutes = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
+          const endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1], 10);
+          if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+            shouldTurnOn = true;
           }
         }
       });
+      controlRelay(shouldTurnOn);
     };
 
-    const intervalId = setInterval(checkSchedules, 60000);  
-    return () => clearInterval(intervalId);  
+    const intervalId = setInterval(checkSchedules, 60000);  // Check every minute
+    return () => clearInterval(intervalId);
   }, [schedules]);
 
   return (

@@ -9,11 +9,16 @@ function Acontrol() {
 
   // Save max temp + auto spray to DB on button click
   const saveSettings = async () => {
+    const temp = parseFloat(temperatureLevel);
+    if (isNaN(temp) || temp < 20 || temp > 35) {
+      alert('Should add only 20-35 this range number');
+      return;
+    }
     try {
       const res = await axios.post(
         'http://localhost:5000/api/temperatureSetting',
         {
-          maxTemp: parseFloat(temperatureLevel),
+          maxTemp: temp,
           autoMode: autoSpray,
         },
         {
@@ -78,12 +83,18 @@ function Acontrol() {
           await axios.get('http://localhost:5000/iot/sprayOn', {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           });
+          await axios.get('http://localhost:5000/iot/buzzerOn', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          });
         } catch (error) {
           console.error('Error controlling relay:', error);
         }
       } else {
         try {
           await axios.get('http://localhost:5000/iot/sprayOff', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          });
+          await axios.get('http://localhost:5000/iot/buzzerOff', {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           });
         } catch (error) {
@@ -117,10 +128,17 @@ function Acontrol() {
               <div className="relative">
                 <input
                   type="number"
-                  min="0"
-                  max="100"
+                  min="20"
+                  max="35"
                   value={temperatureLevel}
-                  onChange={(e) => setTemperatureLevel(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || (parseFloat(val) >= 20 && parseFloat(val) <= 35)) {
+                      setTemperatureLevel(val);
+                    } else {
+                      alert('Should add only 20-35 this range number');
+                    }
+                  }}
                   placeholder="e.g. 30"
                   className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm pr-12"
                 />
