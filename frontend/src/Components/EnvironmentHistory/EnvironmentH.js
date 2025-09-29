@@ -6,22 +6,27 @@ import autoTable from "jspdf-autotable";
 
 function EnvironmentH() {
   const [history, setHistory] = useState([]);
+  const [originalSuppliers, setOriginalSuppliers] = useState([]); // full list for search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [noResults, setNoResults] = useState(false);
 
+ // Fetch history from API
   const fetchHistory = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/iot/history", {
+      const response = await axios.get("http://localhost:5000/iot/history", {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      if (data && Array.isArray(data.data)) {
-        setHistory(data.data);
-      } else {
-        setHistory([]);
-      }
-    } catch (err) {
-      console.error(err);
+
+      const data = response.data.data || [];
+      setHistory(data);
+      setOriginalSuppliers(data); // save full list for searching
+    } catch (error) {
+      console.error("Failed to load history:", error);
       setHistory([]);
+      setOriginalSuppliers([]);
     }
   };
+
 
   useEffect(() => {
     fetchHistory();
@@ -33,6 +38,39 @@ function EnvironmentH() {
     documentTitle: 'Environment History',
     onAfterPrint: () => alert('Print success')
   });
+
+
+
+  // Improved search: case-insensitive, matches any field
+  const handleSearch = () => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      setHistory(originalSuppliers);
+      setNoResults(false);
+      return;
+    }
+    const filtered = originalSuppliers.filter((item) => {
+      return Object.entries(item).some(([key, value]) => {
+        if (value === null || value === undefined) return false;
+        // Format date field as displayed in table
+        if (key === 'date') {
+          const displayDate = new Date(value).toLocaleDateString();
+          return displayDate.toLowerCase().includes(query);
+        }
+        return value.toString().toLowerCase().includes(query);
+      });
+    });
+    setHistory(filtered);
+    setNoResults(filtered.length === 0);
+  };
+
+
+
+
+
+
+
+
 
  // Generate and download PDF
  const handleDownloadPDF = () => {
@@ -187,6 +225,23 @@ function EnvironmentH() {
     <div className="p-4">
       <div id="divToPrint" ref={ComponentsRef} style={{width:'100%'}}>
         <h1 className="text-2xl font-bold mb-4 text-center">Environment History</h1>
+
+        {/* Search */}
+      <div className="flex gap-2 mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by any field (date, temp, humidity, etc.)..."
+          className="border px-4 py-2 rounded-md w-full max-w-md"
+        />
+        <button
+          onClick={handleSearch}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+        >
+          Search
+        </button>
+      </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-300 rounded-lg shadow-md">

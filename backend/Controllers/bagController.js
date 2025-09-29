@@ -1,3 +1,12 @@
+// Get all bags
+const getAllBags = async (req, res) => {
+  try {
+    const bags = await Bag.find().populate("items.inventoryId");
+    res.json(bags);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 const Bag = require("../Model/BagItem");
 ; // Use capital B for model
 
@@ -58,6 +67,7 @@ const deleteBag = async (req, res) => {
 module.exports = {
   createBag,
   getBag,
+  getAllBags,
   updateBag,
   deleteBag,
 };

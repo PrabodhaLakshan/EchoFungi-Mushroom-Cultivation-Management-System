@@ -5,8 +5,10 @@ const BagiteamController=require("../Controllers/bagController");
 
 
 
+
 router.post("/",BagiteamController.createBag);   // Create bag
-router.get("/", BagiteamController.getBag);       // Get bag
+      // Get single bag
+router.get("/bags", BagiteamController.getAllBags); // Get all bags
 router.put("/", BagiteamController.updateBag);    // Update bag items
 router.delete("/", BagiteamController.deleteBag); // Delete bag
 
