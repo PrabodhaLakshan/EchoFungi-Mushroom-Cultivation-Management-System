@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import SupplyNav from "../SupplyNav/SupplyNav";
 import axios from "axios";
 import { FaTruck, FaFilePdf } from "react-icons/fa";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 
 const URL = "http://localhost:5000/suppliers";
 
@@ -11,7 +11,6 @@ function SupplierReport() {
   const [suppliers, setSuppliers] = useState([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const tableRef = useRef();
 
   // Fetch suppliers
   useEffect(() => {
@@ -20,7 +19,7 @@ function SupplierReport() {
         const res = await axios.get(URL);
         const data = res.data.suppliers || res.data || [];
         setSuppliers(data);
-        setFilteredSuppliers(data); // initialize filtered list
+        setFilteredSuppliers(data);
       } catch (err) {
         console.error("Error fetching suppliers:", err);
       }
@@ -28,7 +27,7 @@ function SupplierReport() {
     fetchSuppliers();
   }, []);
 
-  // Auto-filter suppliers
+  // Auto-filter suppliers by search
   useEffect(() => {
     const trimmedQuery = searchQuery.trim().toLowerCase();
     if (!trimmedQuery) {
@@ -37,41 +36,115 @@ function SupplierReport() {
     }
     const filtered = suppliers.filter(
       (sup) =>
-        sup.Supplier_id?.toString().toLowerCase() === trimmedQuery ||
+        sup.Supplier_id?.toString().toLowerCase().includes(trimmedQuery) ||
         sup.Supplier_name?.toLowerCase().includes(trimmedQuery)
     );
     setFilteredSuppliers(filtered);
   }, [searchQuery, suppliers]);
 
-  // Generate PDF
-  const generatePDF = async () => {
-    const input = tableRef.current;
-    if (!input) return;
+  // Generate PDF with header and footer
+  const generatePDF = () => {
+    const doc = new jsPDF("p", "pt", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
 
-    const canvas = await html2canvas(input, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "pt", "a4");
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString();
+    const formattedTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth - 40;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    // Header
+    const addHeader = () => {
+      const headerHeight = 60;
 
-    let heightLeft = imgHeight;
-    let position = 20;
+      // Green rectangle
+      doc.setFillColor(34, 139, 34);
+      doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
 
-    pdf.addImage(imgData, "PNG", 20, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+      // Left: Company info
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("EcoFungi", margin + 15, 50);
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + 20;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 20, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Inventory Management System", margin + 15, 65);
 
-    const today = new Date().toISOString().split("T")[0];
-    pdf.save(`SupplierReport-${today}.pdf`);
+      // Right: Date & time
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${formattedDate} at ${formattedTime}`, pageWidth - margin - 180, 50);
+
+      // Report title
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0);
+      doc.text("Supplier Report", margin, 110);
+
+      // Line below title
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 120, pageWidth - margin, 120);
+
+      // Total records
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Total Suppliers: ${filteredSuppliers.length}`, margin, 135);
+
+      // Border around the page
+      doc.setDrawColor(34, 139, 34);
+      doc.setLineWidth(1);
+      doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);
+    };
+
+    // Footer
+    const addFooter = (pageNumber) => {
+      const footerY = pageHeight - 35;
+
+      // Line above footer
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, footerY - 15, pageWidth - margin, footerY - 15);
+
+      doc.setFontSize(8);
+      doc.setTextColor(90);
+      doc.text(
+        "Note: This report contains supplier records managed by the EcoFungi system.",
+        margin,
+        footerY
+      );
+      doc.text("For inquiries, please contact the system administrator.", margin, footerY + 10);
+
+      // Page number
+      doc.text(`Page ${pageNumber}`, pageWidth - margin - 30, footerY + 10);
+    };
+
+    addHeader();
+
+    // Table
+    autoTable(doc, {
+      startY: 160,
+      head: [["Supplier ID", "Supplier Name", "Contact Number", "Email", "Address"]],
+      body: filteredSuppliers.length
+        ? filteredSuppliers.map((sup) => [
+            sup.Supplier_id,
+            sup.Supplier_name,
+            sup.Phone_number,
+            sup.Email,
+            sup.Address,
+          ])
+        : [["No data available", "", "", "", ""]],
+      styles: { fontSize: 9, halign: "center" },
+      headStyles: { fillColor: [34, 139, 34], textColor: 255, fontStyle: "bold" },
+      didDrawPage: (data) => {
+        const pageNumber = doc.internal.getNumberOfPages();
+        addHeader();
+        addFooter(pageNumber);
+      },
+      margin: { left: margin, right: margin },
+    });
+
+    doc.save(`Supplier_Report_${now.toISOString().split("T")[0]}.pdf`);
   };
 
   return (
@@ -90,13 +163,13 @@ function SupplierReport() {
           </h1>
           <button
             onClick={generatePDF}
-            className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-md"
+            className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-md shadow-md"
           >
             <FaFilePdf /> Download Report
           </button>
         </div>
 
-        {/* Search */}
+        {/* Search box */}
         <input
           type="text"
           placeholder="Search by Supplier ID or Name..."
@@ -110,42 +183,28 @@ function SupplierReport() {
           <p className="text-red-500 font-bold mt-4">No suppliers found</p>
         )}
 
-        {/* Table */}
-        <div
-          ref={tableRef}
-          className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-300 p-6 mt-4"
-        >
-          {/* Report Header */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-green-800">🍄 EcoFungi</h2>
-            <h3 className="text-lg font-semibold text-gray-700">
-              Inventory Management System
-            </h3>
-            <p className="text-sm text-gray-500">
-              Date: {new Date().toLocaleDateString("en-GB")}
-            </p>
-          </div>
-
-          {/* Supplier Table */}
+        {/* Supplier Table */}
+        <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-300 p-6 mt-4">
+          <h2 className="text-xl font-semibold text-green-700 mb-3">Supplier List</h2>
           <table className="w-full border-collapse text-sm">
             <thead className="bg-green-700 text-white">
               <tr>
-                <th className="px-4 py-3 border-b border-gray-300 text-left">Supplier ID</th>
-                <th className="px-4 py-3 border-b border-gray-300 text-left">Supplier Name</th>
-                <th className="px-4 py-3 border-b border-gray-300 text-left">Contact Number</th>
-                <th className="px-4 py-3 border-b border-gray-300 text-left">Email</th>
-                <th className="px-4 py-3 border-b border-gray-300 text-left">Address</th>
+                <th className="px-4 py-3 border-b text-left">Supplier ID</th>
+                <th className="px-4 py-3 border-b text-left">Supplier Name</th>
+                <th className="px-4 py-3 border-b text-left">Contact Number</th>
+                <th className="px-4 py-3 border-b text-left">Email</th>
+                <th className="px-4 py-3 border-b text-left">Address</th>
               </tr>
             </thead>
             <tbody>
               {filteredSuppliers.length > 0 ? (
                 filteredSuppliers.map((sup) => (
                   <tr key={sup._id} className="hover:bg-green-50">
-                    <td className="px-4 py-3 border-b border-gray-300">{sup.Supplier_id}</td>
-                    <td className="px-4 py-3 border-b border-gray-300">{sup.Supplier_name}</td>
-                    <td className="px-4 py-3 border-b border-gray-300">{sup.Phone_number}</td>
-                    <td className="px-4 py-3 border-b border-gray-300">{sup.Email}</td>
-                    <td className="px-4 py-3 border-b border-gray-300">{sup.Address}</td>
+                    <td className="px-4 py-3 border-b">{sup.Supplier_id}</td>
+                    <td className="px-4 py-3 border-b">{sup.Supplier_name}</td>
+                    <td className="px-4 py-3 border-b">{sup.Phone_number}</td>
+                    <td className="px-4 py-3 border-b">{sup.Email}</td>
+                    <td className="px-4 py-3 border-b">{sup.Address}</td>
                   </tr>
                 ))
               ) : (

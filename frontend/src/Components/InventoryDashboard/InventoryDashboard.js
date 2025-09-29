@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import MainIntNav from "../MainIntNav/MainIntNav";
+import Header from "../Header/Header";
 import axios from "axios";
 import {
   Chart as ChartJS,
@@ -103,41 +104,48 @@ function InventoryDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 ml-52 overflow-y-auto">
+           <Header />
         {/* Header */}
-        <div className="bg-[#67C090] text-white px-6 py-4">
-          <h1 className="text-3xl font-semibold">Inventory Management</h1>
-          <p className="text-xl">Dashboard</p>
-        </div>
+        <div className="bg-white text-[#1B5E20] px-6 py-4 shadow-md rounded-md">
+  <h1 className="text-3xl font-semibold">Inventory Management</h1>
+  <p className="text-xl">Dashboard</p>
+</div>
+
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 py-6 bg-[#67C090]">
-          {[ 
-            { label: "Total Item Stock", value: totalStock },
-            { label: "Low Item Stock", value: lowStock, color: "text-yellow-500" },
-            { label: "Purchases", value: purchases.length, color: "text-red-500" },
-            { label: "Suppliers", value: suppliers.length },
-          ].map((stat, index) => (
-            <div
-              key={index}
-              className="bg-white text-black p-4 rounded shadow-md flex flex-col justify-between"
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600">📦</span>
-                  <span className="text-sm">{stat.label}</span>
-                </div>
-                <span className="text-xs text-gray-400">↗</span>
-              </div>
-              <div className={`text-3xl font-bold mt-2 ${stat.color || "text-black"}`}>
-                {stat.value}
-              </div>
-            </div>
-          ))}
+       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 py-6 bg-white">
+  {[
+    { label: "Total Item Stock", value: totalStock ,color: "text-black" },
+    { label: "Low Item Stock", value: lowStock, color: "text-yellow-500" },
+    { label: "Purchases", value: purchases.length, color: "text-red-500" },
+    { label: "Suppliers", value: suppliers.length ,color: "text-black"},
+  ].map((stat, index) => (
+    <div
+      key={index}
+      className="bg-green-200/60 text-black p-4 rounded shadow-md flex flex-col justify-between"
+    >
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <span className="text-white text-lg">📦</span>
+          <span className="text-sm font-semibold">{stat.label}</span>
         </div>
+        <span className="text-xs opacity-70">↗</span>
+      </div>
+      <div
+        className={`text-3xl font-bold mt-2 ${
+          stat.color ? stat.color + " drop-shadow" : "text-white"
+        }`}
+      >
+        {stat.value}
+      </div>
+    </div>
+  ))}
+</div>
+
 
         {/* Charts Section */}
         <div className="flex flex-col md:flex-row px-6 py-4 gap-4">
-          <div className="w-full md:w-1/4 bg-[#67C090] text-white p-6 rounded shadow-md min-h-[250px]">
+          <div className="w-full md:w-1/4 bg-white text-black p-6 rounded shadow-md min-h-[250px]">
             <h2 className="text-lg font-semibold mb-2">Value of Stock</h2>
             <p className="text-3xl font-bold mb-6">Rs.{totalPurchaseCost.toFixed(2)}</p>
             <h3 className="text-md mb-2">Stock Purchases</h3>

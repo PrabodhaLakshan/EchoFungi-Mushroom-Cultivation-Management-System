@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaShoppingCart, FaFilePdf } from "react-icons/fa";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 import PurchaseNav from "../PurchaseNav/PurchaseNav";
 
 const URL = "http://localhost:5000/purchases";
@@ -11,9 +11,7 @@ function PurchaseReport() {
   const [purchases, setPurchases] = useState([]);
   const [filteredPurchases, setFilteredPurchases] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const tableRef = useRef();
 
-  // Fetch purchases
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
@@ -28,86 +26,161 @@ function PurchaseReport() {
     fetchPurchases();
   }, []);
 
-  // Auto-filter purchases
   useEffect(() => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) {
       setFilteredPurchases(purchases);
       return;
     }
-    const filtered = purchases.filter((p) =>
-      (p.Purchase_id ?? "").toString().toLowerCase().includes(query) ||
-      (p.Item_name ?? "").toLowerCase().includes(query)
+    const filtered = purchases.filter(
+      (p) =>
+        (p.Purchase_id ?? "").toString().toLowerCase().includes(query) ||
+        (p.Item_name ?? "").toLowerCase().includes(query)
     );
     setFilteredPurchases(filtered);
   }, [searchQuery, purchases]);
 
-  // Calculate monthly summary
-  const monthlySummary = filteredPurchases.reduce((acc, purchase) => {
-    const month = new Date(purchase.Purchase_date).toLocaleString("default", { month: "long", year: "numeric" });
-    if (!acc[month]) {
-      acc[month] = { totalCost: 0, count: 0 };
-    }
-    acc[month].totalCost += Number(purchase.Price ?? 0);
-    acc[month].count += 1;
-    return acc;
-  }, {});
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Generate PDF
-  const generatePDF = async () => {
-    const input = tableRef.current;
-    if (!input) return;
+    const borderMargin = 15;
+    const contentMargin = borderMargin + 10;
 
-    const canvas = await html2canvas(input, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "pt", "a4");
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString();
+    const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    const generatedText = `Generated on: ${formattedDate} at ${formattedTime}`;
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth - 40;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const fromDate = purchases[0]?.Purchase_date
+      ? new Date(purchases[0].Purchase_date).toLocaleDateString()
+      : "N/A";
+    const toDate = purchases[purchases.length - 1]?.Purchase_date
+      ? new Date(purchases[purchases.length - 1].Purchase_date).toLocaleDateString()
+      : "N/A";
 
-    let heightLeft = imgHeight;
-    let position = 20;
+    // 🔲 Border
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.rect(borderMargin, borderMargin, pageWidth - 2 * borderMargin, pageHeight - 2 * borderMargin);
 
-    pdf.addImage(imgData, "PNG", 20, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    // 🟩 Header
+    const headerHeight = 30;
+const headerInset = 3; // ⬅️ distance between header and page border
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + 20;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 20, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+doc.setFillColor(34, 139, 34); // dark green
 
-    const today = new Date().toISOString().split("T")[0];
-    pdf.save(`PurchaseReport-${today}.pdf`);
+doc.rect(
+  borderMargin + headerInset, // X-position (pushed inward)
+  borderMargin + 2,           // Y-position
+  pageWidth - 2 * (borderMargin + headerInset), // Reduced width
+  headerHeight,
+  "F"
+);
+
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("EcoFungi", contentMargin, borderMargin + 18);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Inventory Management System", contentMargin, borderMargin + 26);
+
+    doc.setFontSize(9);
+    doc.text(generatedText, pageWidth - contentMargin - 70, borderMargin + 26);
+
+    // 🟨 Title
+    const titleY = borderMargin + headerHeight + 12;
+    doc.setTextColor(0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Purchase Report", contentMargin, titleY);
+
+    // ➖ Line
+    doc.setDrawColor(100);
+    doc.setLineWidth(0.5);
+    doc.line(contentMargin, titleY + 3, pageWidth - contentMargin, titleY + 3);
+
+    // 📋 Info
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Total Records: ${filteredPurchases.length}`, contentMargin, titleY + 10);
+    doc.text(`Report Period: ${fromDate} - ${toDate}`, contentMargin, titleY + 16);
+
+    // 📊 Table
+    const tableColumn = ["Purchase ID", "Supplier ID", "Item Name", "Purchase Date", "Price"];
+    const tableRows = filteredPurchases.map((p) => [
+      p.Purchase_id,
+      p.Supplier_id,
+      p.Item_name,
+      new Date(p.Purchase_date).toLocaleDateString(),
+      `Rs.${p.Price}`,
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: titleY + 22,
+      theme: "grid",
+      headStyles: {
+        fillColor: [34, 139, 34],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        halign: "center",
+      },
+      bodyStyles: {
+        halign: "center",
+        fontSize: 9,
+      },
+      margin: { left: contentMargin, right: contentMargin },
+    });
+
+    // 📝 Notes
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(9);
+    doc.setTextColor(90);
+    doc.text("Note: This report contains purchase records collected by the EcoFungi system.", contentMargin, finalY);
+    doc.text("For questions or concerns, please contact the system administrator.", contentMargin, finalY + 5);
+
+    // 📅 Footer
+    const footerY = pageHeight - borderMargin - 5;
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.5);
+    doc.line(contentMargin, footerY - 4, pageWidth - contentMargin, footerY - 4);
+
+    doc.setFontSize(8);
+    doc.setTextColor(90);
+    doc.text("EcoFungi Inventory Management System", contentMargin, footerY);
+    const pageText = `Page 1 of ${doc.internal.getNumberOfPages()}`;
+    const pageTextWidth = doc.getTextWidth(pageText);
+    doc.text(pageText, pageWidth - contentMargin - pageTextWidth, footerY);
+
+    doc.text(generatedText, contentMargin, footerY - 6);
+
+    doc.save(`EcoFungi_Purchase_Report_${now.toISOString().split("T")[0]}.pdf`);
   };
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
-      {/* Sidebar */}
       <div className="w-[200px] fixed top-0 left-0 h-full bg-green-900 text-white shadow-lg">
         <PurchaseNav />
       </div>
-
-      {/* Main content */}
       <div className="ml-[200px] flex-1 p-6 space-y-6 overflow-auto">
-        {/* Header & PDF */}
         <div className="flex justify-between items-center print:hidden">
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
             <FaShoppingCart /> Purchase Report
           </h1>
-         <button
-           onClick={generatePDF}
-          className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-md"
->
-  <FaFilePdf /> Download Report
-</button>
-
+          <button
+            onClick={generatePDF}
+            className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-md"
+          >
+            <FaFilePdf /> Download Report
+          </button>
         </div>
 
-        {/* Search */}
         <input
           type="text"
           placeholder="Search purchases by Item or ID..."
@@ -116,42 +189,7 @@ function PurchaseReport() {
           className="border px-4 py-2 rounded-md w-full max-w-md print:hidden"
         />
 
-        {/* No results */}
-        {filteredPurchases.length === 0 && (
-          <p className="text-red-500 font-bold mt-4">No purchases found</p>
-        )}
-
-        {/* Report Table */}
-        <div
-          ref={tableRef}
-          className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-300 p-6 mt-4"
-        >
-          {/* Report Header */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-green-800">🍄 EcoFungi</h2>
-            <h3 className="text-lg font-semibold text-gray-700">
-              Inventory Management System
-            </h3>
-            <h4 className="text-lg font-semibold text-gray-700">
-              Purchase Details Report
-            </h4>
-            <p className="text-sm text-gray-500">
-              Date: {new Date().toLocaleDateString("en-GB")}
-            </p>
-          </div>
-
-          {/* Monthly Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            {Object.keys(monthlySummary).map((month) => (
-              <div key={month} className="bg-green-100 p-4 rounded shadow text-center">
-                <p className="text-green-800 font-semibold">{month}</p>
-                <p>Total Purchases: {monthlySummary[month].count}</p>
-                <p>Total Cost: Rs.{monthlySummary[month].totalCost.toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Purchases Table */}
+        <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-300 p-6 mt-4">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-green-700 text-white">
               <tr>
@@ -169,7 +207,9 @@ function PurchaseReport() {
                     <td className="px-4 py-3 border-b border-gray-300">{p.Purchase_id}</td>
                     <td className="px-4 py-3 border-b border-gray-300">{p.Supplier_id}</td>
                     <td className="px-4 py-3 border-b border-gray-300">{p.Item_name}</td>
-                    <td className="px-4 py-3 border-b border-gray-300">{new Date(p.Purchase_date).toLocaleDateString("en-GB")}</td>
+                    <td className="px-4 py-3 border-b border-gray-300">
+                      {new Date(p.Purchase_date).toLocaleDateString()}
+                    </td>
                     <td className="px-4 py-3 border-b border-gray-300">Rs.{p.Price}</td>
                   </tr>
                 ))

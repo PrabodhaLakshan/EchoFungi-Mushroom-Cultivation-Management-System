@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import InventoryNav from "../InventoryNav/InventoryNav";
 import axios from "axios";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import autoTable from "jspdf-autotable";
 
 const URL = "http://localhost:5000/items";
 
@@ -18,22 +18,20 @@ function IntReport() {
 
   useEffect(() => {
     axios.get(URL).then((res) => {
-      setItems(res.data.items);
-      setFilteredItems(res.data.items);
+      setItems(res.data.items || []);
+      setFilteredItems(res.data.items || []);
     });
   }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    const d = new Date(dateString);
-    return d.toLocaleDateString();
+    return new Date(dateString).toLocaleDateString();
   };
 
-
+  // Filtering logic
   useEffect(() => {
     let result = [...items];
 
-    
     if (selectedMonth) {
       const [year, month] = selectedMonth.split("-");
       result = result.filter((item) => {
@@ -45,64 +43,199 @@ function IntReport() {
       });
     }
 
-    
     if (searchQuery.trim()) {
-      result = result.filter((item) =>
-        item.Item_code &&
-        item.Item_code.toString().toLowerCase().includes(searchQuery.toLowerCase())
+      result = result.filter(
+        (item) =>
+          item.Item_code &&
+          item.Item_code.toString().toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     setFilteredItems(result);
   }, [selectedMonth, searchQuery, items]);
 
-  const lowStockItems = filteredItems.filter(
-    (item) => item.Quantity < item.Reorder_level
-  );
+  const lowStockItems = filteredItems.filter((item) => item.Quantity < item.Reorder_level);
   const expiringItems = filteredItems.filter((item) => {
     const expDate = new Date(item.Expired_date);
     return expDate >= today && expDate <= nextWeek;
   });
 
-  const generatePDF = async () => {
-    const element = document.getElementById("pdf-report");
-    if (!element) return;
+  // Generate PDF
+  const generatePDF = () => {
+    const doc = new jsPDF("p", "pt", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      scrollY: -window.scrollY,
-      useCORS: true,
-    });
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString();
+    const formattedTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "pt", "a4");
+    const reportPeriod = filteredItems.length
+      ? `${formatDate(filteredItems[0].Received_date)} - ${formatDate(filteredItems[filteredItems.length - 1].Received_date)}`
+      : "N/A";
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+    // HEADER
+    const addHeader = () => {
+      const headerHeight = 60;
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      // Green rectangle top banner
+      doc.setFillColor(34, 139, 34);
+      doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
 
-    let heightLeft = imgHeight;
-    let position = 0;
+      // Left-aligned company info
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("EcoFungi", margin + 15, 50);
 
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Inventory Management System", margin + 15, 65);
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+      // Right-aligned date & time
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${formattedDate} at ${formattedTime}`, pageWidth - margin - 180, 50);
 
-    pdf.save("Inventory_Movement_Report.pdf");
+      // Report title - left aligned
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0);
+      doc.text("Inventory Movement Report", margin, 110);
+
+      // Horizontal line under report title
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 120, pageWidth - margin, 120);
+
+      // Total Records and Period - LEFT aligned under line
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Total Records: ${filteredItems.length}`, margin, 135);
+      doc.text(`Report Period: ${reportPeriod}`, margin, 150);
+
+      // Outer border
+      doc.setDrawColor(34, 139, 34);
+      doc.setLineWidth(1);
+      doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);
+    };
+
+    // FOOTER
+    const addFooter = (pageNumber) => {
+      const footerY = pageHeight - 35;
+
+      // Horizontal line above footer
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, footerY - 15, pageWidth - margin, footerY - 15);
+
+      doc.setFontSize(8);
+      doc.setTextColor(90);
+      doc.text(
+        "Note: This report contains inventory records collected by the EcoFungi system.",
+        margin,
+        footerY
+      );
+      doc.text("For questions or concerns, please contact the system administrator.", margin, footerY + 10);
+
+      doc.text(`Page ${pageNumber}`, pageWidth - margin - 30, footerY + 10);
+    };
+
+    addHeader();
+
+    let yPosition = 180;
+
+    // Dynamic tables with evenly spaced columns
+    const drawTable = (columns, data, title) => {
+      doc.setFontSize(11);
+      doc.setTextColor(34, 139, 34);
+      doc.text(title, margin, yPosition - 10);
+
+      autoTable(doc, {
+        head: [columns],
+        body: data.length ? data : [["No data available", ...Array(columns.length - 1).fill("")]],
+        startY: yPosition,
+        margin: { left: margin, right: margin },
+        styles: {
+          fontSize: 9,
+          halign: "center",
+          cellPadding: 4,
+        },
+        headStyles: {
+          fillColor: [34, 139, 34],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+        // 👇 Even column widths
+        columnStyles: Object.fromEntries(columns.map((_, i) => [i, { cellWidth: "auto" }])),
+        didDrawPage: () => {
+          const pageNumber = doc.internal.getNumberOfPages();
+          addHeader();
+          addFooter(pageNumber);
+        },
+      });
+      yPosition = doc.lastAutoTable.finalY + 30;
+    };
+
+    // Main Inventory Table
+    drawTable(
+      [
+        "Item Code",
+        "Category",
+        "Item Name",
+        "Quantity",
+        "Unit",
+        "Received Date",
+        "Expired Date",
+        "Reorder Level",
+        "Description",
+        "Purchase ID",
+      ],
+      filteredItems.map((item) => [
+        item.Item_code,
+        item.Category,
+        item.Item_name,
+        item.Quantity,
+        item.Unit,
+        formatDate(item.Received_date),
+        formatDate(item.Expired_date),
+        item.Reorder_level,
+        item.Description,
+        item.Purchase_id,
+      ]),
+      "Inventory Overview"
+    );
+
+    // Low Stock Table
+    drawTable(
+      ["Item Code", "Item Name", "Quantity", "Reorder Level"],
+      lowStockItems.map((item) => [
+        item.Item_code,
+        item.Item_name,
+        item.Quantity,
+        item.Reorder_level,
+      ]),
+      "Low Stock Items"
+    );
+
+    // Expiring Items Table
+    drawTable(
+      ["Item Code", "Item Name", "Quantity", "Expired Date"],
+      expiringItems.map((item) => [
+        item.Item_code,
+        item.Item_name,
+        item.Quantity,
+        formatDate(item.Expired_date),
+      ]),
+      "Expiring Items (Next 7 Days)"
+    );
+
+    doc.save(`Inventory_Movement_Report_${now.toISOString().split("T")[0]}.pdf`);
   };
 
   return (
     <div className="flex bg-green-50 min-h-screen">
       <InventoryNav />
-
       <div className="ml-52 flex-1 p-6 space-y-8 overflow-auto">
         {/* Filters */}
         <div className="flex justify-between items-center">
@@ -121,7 +254,6 @@ function IntReport() {
               className="px-4 py-2 border rounded-md"
             />
           </div>
-
           <button
             onClick={generatePDF}
             className="bg-green-700 text-white px-5 py-2 rounded-md hover:bg-green-800 shadow-md transition-all"
@@ -130,145 +262,45 @@ function IntReport() {
           </button>
         </div>
 
-        {/* Report */}
-        <div
-          id="pdf-report"
-          className="bg-white p-8 rounded-xl shadow-lg space-y-8 text-sm"
-        >
-          {/* Header */}
-          <div className="text-center border-b pb-3">
-            <h1 className="text-3xl font-bold text-green-800 uppercase tracking-widest">
-              Inventory Movement Report
-            </h1>
-            <p className="text-gray-600">Prepared by: EcoFungi Inventory System</p>
-            <p className="text-gray-600">Date: {today.toLocaleDateString()}</p>
-          </div>
-
-          {/* Inventory Overview */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
-              Inventory Overview
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-green-300 text-left text-sm">
-                <thead className="bg-green-700 text-white">
-                  <tr>
-                    {[
-                      "Item Code","Category","Item Name","Quantity","Unit",
-                      "Received Date","Expired Date","Reorder Level","Description","Purchase ID"
-                    ].map((h, idx) => (
-                      <th key={idx} className="px-3 py-2 border-r last:border-r-0">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item, i) => (
-                    <tr key={i} className="border-t hover:bg-green-50">
-                      <td className="px-3 py-2">{item.Item_code}</td>
-                      <td className="px-3 py-2">{item.Category}</td>
-                      <td className="px-3 py-2">{item.Item_name}</td>
-                      <td className="px-3 py-2">{item.Quantity}</td>
-                      <td className="px-3 py-2">{item.Unit}</td>
-                      <td className="px-3 py-2">{formatDate(item.Received_date)}</td>
-                      <td className="px-3 py-2">{formatDate(item.Expired_date)}</td>
-                      <td className="px-3 py-2">{item.Reorder_level}</td>
-                      <td className="px-3 py-2">{item.Description}</td>
-                      <td className="px-3 py-2">{item.Purchase_id}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Low Stock Items */}
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
-              Low Stock Items
-            </h2>
-            {lowStockItems.length === 0 ? (
-              <p className="text-center text-gray-500 py-2">
-                All items are above reorder level.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full border border-green-300 text-left text-sm">
-                  <thead className="bg-green-700 text-white">
-                    <tr>
-                      {["Item Code","Item Name","Quantity","Reorder Level"].map((h, idx) => (
-                        <th key={idx} className="px-3 py-2 border-r last:border-r-0">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lowStockItems.map((item, i) => (
-                      <tr key={i} className="border-t text-green-700 font-semibold hover:bg-green-50">
-                        <td className="px-3 py-2">{item.Item_code}</td>
-                        <td className="px-3 py-2">{item.Item_name}</td>
-                        <td className="px-3 py-2">{item.Quantity}</td>
-                        <td className="px-3 py-2">{item.Reorder_level}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Expiring Items */}
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
-              Expiring Items (Next 7 Days)
-            </h2>
-            {expiringItems.length === 0 ? (
-              <p className="text-center text-gray-500 py-2">
-                No items expiring in the next 7 days.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full border border-green-300 text-left text-sm">
-                  <thead className="bg-green-700 text-white">
-                    <tr>
-                      {["Item Code","Item Name","Quantity","Expired Date"].map((h, idx) => (
-                        <th key={idx} className="px-3 py-2 border-r last:border-r-0">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expiringItems.map((item, i) => (
-                      <tr key={i} className="border-t text-green-700 font-semibold hover:bg-green-50">
-                        <td className="px-3 py-2">{item.Item_code}</td>
-                        <td className="px-3 py-2">{item.Item_name}</td>
-                        <td className="px-3 py-2">{item.Quantity}</td>
-                        <td className="px-3 py-2">{formatDate(item.Expired_date)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Movement Summary */}
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-green-700 border-b pb-1">
-              Movement Summary
-            </h2>
-            <div className="grid grid-cols-3 gap-4 mt-2">
-              <div className="bg-green-100 p-4 rounded shadow text-center">
-                <p className="text-green-800">Total Stock Items</p>
-                <p className="font-bold text-green-700 text-lg">{filteredItems.length}</p>
-              </div>
-              <div className="bg-green-100 p-4 rounded shadow text-center">
-                <p className="text-green-800">Low Stock Items</p>
-                <p className="font-bold text-green-700 text-lg">{lowStockItems.length}</p>
-              </div>
-              <div className="bg-green-100 p-4 rounded shadow text-center">
-                <p className="text-green-800">Expiring Items (7 days)</p>
-                <p className="font-bold text-green-700 text-lg">{expiringItems.length}</p>
-              </div>
-            </div>
-          </div>
+        {/* Inventory Overview Table */}
+        <div className="overflow-x-auto bg-white p-6 rounded-xl shadow-lg">
+          <h2 className="text-xl font-semibold text-green-700 mb-3">Inventory Overview</h2>
+          <table className="min-w-full border border-green-300 text-left text-sm">
+            <thead className="bg-green-700 text-white">
+              <tr>
+                {[
+                  "Item Code",
+                  "Category",
+                  "Item Name",
+                  "Quantity",
+                  "Unit",
+                  "Received Date",
+                  "Expired Date",
+                  "Reorder Level",
+                  "Description",
+                  "Purchase ID",
+                ].map((h, idx) => (
+                  <th key={idx} className="px-3 py-2 border-r last:border-r-0">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item, i) => (
+                <tr key={i} className="border-t hover:bg-green-50">
+                  <td className="px-3 py-2">{item.Item_code}</td>
+                  <td className="px-3 py-2">{item.Category}</td>
+                  <td className="px-3 py-2">{item.Item_name}</td>
+                  <td className="px-3 py-2">{item.Quantity}</td>
+                  <td className="px-3 py-2">{item.Unit}</td>
+                  <td className="px-3 py-2">{formatDate(item.Received_date)}</td>
+                  <td className="px-3 py-2">{formatDate(item.Expired_date)}</td>
+                  <td className="px-3 py-2">{item.Reorder_level}</td>
+                  <td className="px-3 py-2">{item.Description}</td>
+                  <td className="px-3 py-2">{item.Purchase_id}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
