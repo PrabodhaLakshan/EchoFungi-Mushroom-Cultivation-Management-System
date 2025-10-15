@@ -29,7 +29,7 @@ const Contact = () => {
   return (
     <div className="bg-white overflow-x-hidden min-h-screen">
       {/* Navigation */}
-      <nav className="bg-white shadow-lg border-b-2 border-green-200 relative z-50 h-[80px]">
+      <nav className="bg-white shadow-lg border-b-2 border-green-200 fixed top-0 left-0 right-0 z-50 h-[80px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex justify-between items-center h-full">
             <div className="flex items-center space-x-3">
@@ -66,7 +66,7 @@ const Contact = () => {
       </nav>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-green-50 via-white to-green-50 py-16">
+      <div className="bg-gradient-to-br from-green-50 via-white to-green-50 py-16 pt-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold text-green-900 mb-6">
             Contact <span className="text-green-600">EchoFungi</span>
