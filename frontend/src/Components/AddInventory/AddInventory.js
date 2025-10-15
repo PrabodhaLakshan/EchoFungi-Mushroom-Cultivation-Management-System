@@ -20,8 +20,10 @@ function AddInventory() {
   });
 
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [purchases, setPurchases] = useState([]);
 
+  // Fetch purchases for dropdown
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
@@ -36,76 +38,93 @@ function AddInventory() {
     fetchPurchases();
   }, []);
 
-  // ✅ Handle input change with real-time error clearing
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setInputs((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Field-level validation
+  const validateField = (name, value) => {
+    let error = "";
 
-    // Clear the error for the specific field
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: "",
-    }));
+    switch (name) {
+      case "Category":
+        if (!value) error = "Category is required.";
+        break;
+
+      case "Item_name":
+        if (!value?.trim()) error = "Item name is required.";
+        else if (value.length < 2) error = "Item name must be at least 2 characters.";
+        break;
+
+      case "Quantity":
+        if (value === "") error = "Quantity is required.";
+        else if (Number(value) < 0) error = "Quantity cannot be negative.";
+        else if (Number(value) > 100) error = "Quantity cannot exceed 100.";
+        break;
+
+      case "Unit":
+        if (!value?.trim()) error = "Unit is required.";
+        break;
+
+      case "Received_date":
+        if (!value) error = "Received date is required.";
+        else if (new Date(value) > new Date()) error = "Received date cannot be in the future.";
+        break;
+
+      case "Expired_date":
+        if (value && inputs.Received_date && new Date(value) < new Date(inputs.Received_date)) {
+          error = "Expired date cannot be before received date.";
+        }
+        break;
+
+      case "Reorder_level":
+        if (value === "") error = "Reorder level is required.";
+        else if (Number(value) < 0) error = "Reorder level cannot be negative.";
+        break;
+
+      case "Purchase_id":
+        if (!value) error = "Purchase ID is required.";
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
   };
 
-  // ✅ Form validation
-  const validate = () => {
+  // Handle input change (real-time validation)
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setInputs((prev) => ({ ...prev, [name]: value }));
+
+    // Validate only if field is touched
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
+  // Mark field as touched on blur
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Validate all fields before submit
+  const validateForm = () => {
     const newErrors = {};
-
-    if (!inputs.Category) newErrors.Category = "Category is required.";
-
-    if (!inputs.Item_name?.trim()) {
-      newErrors.Item_name = "Item name is required.";
-    } else if (inputs.Item_name.length < 2) {
-      newErrors.Item_name = "Item name must be at least 2 characters.";
-    }
-
-    if (inputs.Quantity === "") {
-      newErrors.Quantity = "Quantity is required.";
-    } else if (Number(inputs.Quantity) < 0) {
-      newErrors.Quantity = "Quantity cannot be negative.";
-    } else if (Number(inputs.Quantity) > 100) {
-      newErrors.Quantity = "Quantity cannot exceed 100.";
-    }
-
-    if (!inputs.Unit?.trim()) newErrors.Unit = "Unit is required.";
-
-    if (!inputs.Received_date) {
-      newErrors.Received_date = "Received date is required.";
-    } else if (new Date(inputs.Received_date) > new Date()) {
-      newErrors.Received_date = "Received date cannot be in the future.";
-    }
-
-    if (inputs.Expired_date) {
-      if (
-        inputs.Received_date &&
-        new Date(inputs.Expired_date) < new Date(inputs.Received_date)
-      ) {
-        newErrors.Expired_date = "Expired date cannot be before received date.";
-      }
-    }
-
-    if (inputs.Reorder_level === "") {
-      newErrors.Reorder_level = "Reorder level is required.";
-    } else if (Number(inputs.Reorder_level) < 0) {
-      newErrors.Reorder_level = "Reorder level cannot be negative.";
-    }
-
-    if (!inputs.Purchase_id) {
-      newErrors.Purchase_id = "Purchase ID is required.";
-    }
-
+    Object.keys(inputs).forEach((key) => {
+      const error = validateField(key, inputs[key]);
+      if (error) newErrors[key] = error;
+    });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validateForm()) return;
 
     try {
       const res = await axios.post("http://localhost:5000/items", {
@@ -135,7 +154,6 @@ function AddInventory() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       <InventoryNav />
-
       <div className="flex-grow flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl bg-white p-8 rounded shadow">
           <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
@@ -163,7 +181,10 @@ function AddInventory() {
                 name="Category"
                 value={inputs.Category}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Category ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               >
                 <option value="">-- Select Category --</option>
                 <option value="Raw Material">Raw Material</option>
@@ -171,7 +192,9 @@ function AddInventory() {
                 <option value="Packaging">Packaging</option>
                 <option value="Others">Others</option>
               </select>
-              {errors.Category && <p className="text-red-500 text-sm mt-1">{errors.Category}</p>}
+              {touched.Category && errors.Category && (
+                <p className="text-red-500 text-sm mt-1">{errors.Category}</p>
+              )}
             </div>
 
             {/* Item Name */}
@@ -182,9 +205,14 @@ function AddInventory() {
                 name="Item_name"
                 value={inputs.Item_name}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Item_name ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Item_name && <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>}
+              {touched.Item_name && errors.Item_name && (
+                <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>
+              )}
             </div>
 
             {/* Quantity */}
@@ -195,9 +223,14 @@ function AddInventory() {
                 name="Quantity"
                 value={inputs.Quantity}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Quantity ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Quantity && <p className="text-red-500 text-sm mt-1">{errors.Quantity}</p>}
+              {touched.Quantity && errors.Quantity && (
+                <p className="text-red-500 text-sm mt-1">{errors.Quantity}</p>
+              )}
             </div>
 
             {/* Unit */}
@@ -208,9 +241,14 @@ function AddInventory() {
                 name="Unit"
                 value={inputs.Unit}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Unit ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Unit && <p className="text-red-500 text-sm mt-1">{errors.Unit}</p>}
+              {touched.Unit && errors.Unit && (
+                <p className="text-red-500 text-sm mt-1">{errors.Unit}</p>
+              )}
             </div>
 
             {/* Received Date */}
@@ -221,9 +259,14 @@ function AddInventory() {
                 name="Received_date"
                 value={inputs.Received_date}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Received_date ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Received_date && <p className="text-red-500 text-sm mt-1">{errors.Received_date}</p>}
+              {touched.Received_date && errors.Received_date && (
+                <p className="text-red-500 text-sm mt-1">{errors.Received_date}</p>
+              )}
             </div>
 
             {/* Expired Date */}
@@ -234,9 +277,14 @@ function AddInventory() {
                 name="Expired_date"
                 value={inputs.Expired_date}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Expired_date ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Expired_date && <p className="text-red-500 text-sm mt-1">{errors.Expired_date}</p>}
+              {touched.Expired_date && errors.Expired_date && (
+                <p className="text-red-500 text-sm mt-1">{errors.Expired_date}</p>
+              )}
             </div>
 
             {/* Reorder Level */}
@@ -247,9 +295,14 @@ function AddInventory() {
                 name="Reorder_level"
                 value={inputs.Reorder_level}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Reorder_level ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Reorder_level && <p className="text-red-500 text-sm mt-1">{errors.Reorder_level}</p>}
+              {touched.Reorder_level && errors.Reorder_level && (
+                <p className="text-red-500 text-sm mt-1">{errors.Reorder_level}</p>
+              )}
             </div>
 
             {/* Description */}
@@ -271,7 +324,10 @@ function AddInventory() {
                 name="Purchase_id"
                 value={inputs.Purchase_id}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Purchase_id ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               >
                 <option value="">Select Purchase ID</option>
                 {Array.isArray(purchases) &&
@@ -281,7 +337,9 @@ function AddInventory() {
                     </option>
                   ))}
               </select>
-              {errors.Purchase_id && <p className="text-red-500 text-sm mt-1">{errors.Purchase_id}</p>}
+              {touched.Purchase_id && errors.Purchase_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.Purchase_id}</p>
+              )}
             </div>
 
             {/* Submit Button */}

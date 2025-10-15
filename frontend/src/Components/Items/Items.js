@@ -54,20 +54,25 @@ function Items() {
   }, []);
 
   // Search by Item Code
-  useEffect(() => {
-    const trimmed = searchQuery.trim().toLowerCase();
+useEffect(() => {
+  const trimmed = searchQuery.trim().toLowerCase();
 
-    if (trimmed === "") {
-      setItems(originalItems);
-      setNoResults(false);
-    } else {
-      const filtered = originalItems.filter(
-        (item) => item.Item_code?.toString().toLowerCase() === trimmed
-      );
-      setItems(filtered);
-      setNoResults(filtered.length === 0);
-    }
-  }, [searchQuery, originalItems]);
+  if (trimmed === "") {
+    setItems(originalItems);
+    setNoResults(false);
+  } else {
+    const filtered = originalItems.filter(
+      (item) =>
+        item.Item_code?.toString().toLowerCase().startsWith(trimmed) ||
+        item.Item_name?.toString().toLowerCase().startsWith(trimmed)
+    );
+
+    setItems(filtered);
+    setNoResults(filtered.length === 0);
+  }
+}, [searchQuery, originalItems]);
+
+
 
   const handleDelete = (id) => {
     setItems((prev) => prev.filter((item) => item._id !== id));
@@ -118,7 +123,7 @@ function Items() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔎 Search by Item Code..."
+            placeholder="🔎 Search by Item Code or Item name..."
             className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
           />
           <select

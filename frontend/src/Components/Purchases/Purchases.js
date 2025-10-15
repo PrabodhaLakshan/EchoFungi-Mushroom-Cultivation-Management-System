@@ -43,19 +43,26 @@ function Purchases() {
   }, []);
 
   // Auto search logic
-  useEffect(() => {
-    const trimmedQuery = searchQuery.trim();
-    if (trimmedQuery === "") {
-      setPurchases(originalPurchases);
-      setNoResults(false);
-    } else {
-      const filtered = originalPurchases.filter((purchase) =>
-        purchase.Purchase_id?.toString().toLowerCase() === trimmedQuery.toLowerCase()
-      );
-      setPurchases(filtered);
-      setNoResults(filtered.length === 0);
-    }
-  }, [searchQuery, originalPurchases]);
+ useEffect(() => {
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+
+  if (trimmedQuery === "") {
+    setPurchases(originalPurchases);
+    setNoResults(false);
+  } else {
+    const filtered = originalPurchases.filter(
+      (purchase) =>
+        purchase.Purchase_id?.toString().toLowerCase().includes(trimmedQuery) ||
+        purchase.Item_name?.toLowerCase().startsWith(trimmedQuery)
+    );
+
+    setPurchases(filtered);
+    setNoResults(filtered.length === 0);
+  }
+}, [searchQuery, originalPurchases]);
+
+
+
 
   // Delete purchase
   const handleDelete = (id) => {
@@ -165,7 +172,7 @@ function Purchases() {
       type="text"
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder="🔎 Search by Purchase ID..."
+      placeholder="🔎 Search by Purchase ID or Item Name..."
       className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
     />
   </div>

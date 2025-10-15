@@ -6,9 +6,10 @@ import PurchaseNav from "../PurchaseNav/PurchaseNav";
 function UpdatePurchase() {
   const [inputs, setInputs] = useState({});
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [suppliers, setSuppliers] = useState([]);
-  const navigate = useNavigate();
   const { id } = useParams();
+  const navigate = useNavigate();
 
   // Fetch current purchase
   useEffect(() => {
@@ -41,9 +42,7 @@ function UpdatePurchase() {
     const fetchSuppliers = async () => {
       try {
         const res = await axios.get("http://localhost:5000/suppliers");
-        if (Array.isArray(res.data.suppliers)) {
-          setSuppliers(res.data.suppliers);
-        }
+        if (Array.isArray(res.data.suppliers)) setSuppliers(res.data.suppliers);
       } catch (err) {
         console.error("Error fetching suppliers:", err);
       }
@@ -51,44 +50,70 @@ function UpdatePurchase() {
     fetchSuppliers();
   }, []);
 
-  // Handle input change
+  // Field-level validation
+  const validateField = (name, value) => {
+    let error = "";
+    switch (name) {
+      case "Supplier_id":
+        if (!value) error = "Supplier is required.";
+        break;
+      case "Item_name":
+        if (!value?.trim()) error = "Item name is required.";
+        else if (value.length < 2) error = "Item name must be at least 2 characters.";
+        break;
+      case "Purchase_date":
+        if (!value) error = "Purchase date is required.";
+        else if (new Date(value) > new Date()) error = "Purchase date cannot be in the future.";
+        break;
+      case "Price":
+        if (value === "" || value === undefined) error = "Price is required.";
+        else {
+          const priceRegex = /^\d+(\.\d{1,2})?$/;
+          if (!priceRegex.test(value))
+            error = "Price must be a valid non-negative number with up to 2 decimal places.";
+        }
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
+  // Handle input change with real-time validation
   const handleChange = (e) => {
     const { name, value } = e.target;
     setInputs((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
   };
 
-  // Validation
-  const validate = () => {
+  // Mark field as touched on blur
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Validate all fields on submit
+  const validateForm = () => {
     const newErrors = {};
-    if (!inputs.Supplier_id) newErrors.Supplier_id = "Supplier is required.";
-    if (!inputs.Item_name?.trim()) {
-      newErrors.Item_name = "Item name is required.";
-    } else if (inputs.Item_name.length < 2) {
-      newErrors.Item_name = "Item name must be at least 2 characters.";
-    }
-    if (!inputs.Purchase_date) {
-      newErrors.Purchase_date = "Purchase date is required.";
-    } else if (new Date(inputs.Purchase_date) > new Date()) {
-      newErrors.Purchase_date = "Purchase date cannot be in the future.";
-    }
-    if (inputs.Price === "" || inputs.Price === undefined) {
-      newErrors.Price = "Price is required.";
-    } else {
-      const priceRegex = /^\d+(\.\d{1,2})?$/;
-      if (!priceRegex.test(inputs.Price)) {
-        newErrors.Price =
-          "Price must be a valid non-negative number with up to 2 decimal places.";
-      }
-    }
+    Object.keys(inputs).forEach((key) => {
+      const error = validateField(key, inputs[key]);
+      if (error) newErrors[key] = error;
+    });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Submit handler
+  // Submit update request
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validateForm()) return;
 
     try {
       await axios.put(`http://localhost:5000/purchases/${id}`, {
@@ -117,9 +142,7 @@ function UpdatePurchase() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Purchase ID */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Purchase ID
-              </label>
+              <label className="block text-gray-700 font-medium mb-1">Purchase ID</label>
               <input
                 type="text"
                 name="Purchase_id"
@@ -131,75 +154,79 @@ function UpdatePurchase() {
 
             {/* Supplier */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Supplier
-              </label>
+              <label className="block text-gray-700 font-medium mb-1">Supplier</label>
               <select
                 name="Supplier_id"
                 value={inputs.Supplier_id || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Supplier_id ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               >
                 <option value="">-- Select Supplier --</option>
                 {suppliers.map((sup) => (
                   <option key={sup._id} value={sup.Supplier_id}>
-                    ({sup.Supplier_id})
+                    {sup.Supplier_id} 
                   </option>
                 ))}
               </select>
-              {errors.Supplier_id && (
+              {touched.Supplier_id && errors.Supplier_id && (
                 <p className="text-red-500 text-sm mt-1">{errors.Supplier_id}</p>
               )}
             </div>
 
             {/* Item Name */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Item Name
-              </label>
+              <label className="block text-gray-700 font-medium mb-1">Item Name</label>
               <input
                 type="text"
                 name="Item_name"
                 value={inputs.Item_name || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Item_name ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Item_name && (
+              {touched.Item_name && errors.Item_name && (
                 <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>
               )}
             </div>
 
             {/* Purchase Date */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Purchase Date
-              </label>
+              <label className="block text-gray-700 font-medium mb-1">Purchase Date</label>
               <input
                 type="date"
                 name="Purchase_date"
                 value={inputs.Purchase_date || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Purchase_date ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Purchase_date && (
+              {touched.Purchase_date && errors.Purchase_date && (
                 <p className="text-red-500 text-sm mt-1">{errors.Purchase_date}</p>
               )}
             </div>
 
             {/* Price */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Price
-              </label>
+              <label className="block text-gray-700 font-medium mb-1">Price</label>
               <input
                 type="number"
                 name="Price"
                 value={inputs.Price || ""}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 step="0.01"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Price ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Price && (
+              {touched.Price && errors.Price && (
                 <p className="text-red-500 text-sm mt-1">{errors.Price}</p>
               )}
             </div>

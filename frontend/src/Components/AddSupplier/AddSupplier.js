@@ -15,67 +15,86 @@ function AddSupplier() {
   });
 
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({}); // 👈 To track if user has interacted
 
+  // ✅ Validation function
+  const validateField = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "Supplier_name":
+        if (!value.trim()) error = "Supplier name is required.";
+        else if (value.length < 2)
+          error = "Supplier name must be at least 2 characters.";
+        else if (!/^[A-Za-z\s.]+$/.test(value))
+          error = "Supplier name can contain letters, spaces, and dots only.";
+        break;
+
+      case "Phone_number":
+        if (!value.trim()) error = "Phone number is required.";
+        else if (!/^0\d{9}$/.test(value))
+          error = "Phone number must start with 0 and be exactly 10 digits.";
+        break;
+
+      case "Email":
+        if (!value.trim()) error = "Email is required.";
+        else if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(value))
+          error = "Invalid email format.";
+        break;
+
+      case "Address":
+        if (!value.trim()) error = "Address is required.";
+        else if (value.trim().length < 5)
+          error = "Address must be at least 5 characters.";
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
+  };
+
+  // ✅ On change (real-time validation)
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Only allow digits for phone number
+    // Allow only digits for phone
     if (name === "Phone_number" && !/^\d*$/.test(value)) return;
 
-    setInputs((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setInputs((prev) => ({ ...prev, [name]: value }));
 
-    
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
+    // Run validation live only if field has been touched
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
   };
 
-  const validate = () => {
+  // ✅ Mark field as touched when user interacts
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // ✅ Validate all before submit
+  const validateForm = () => {
     const newErrors = {};
-
-    // Supplier Name
-    if (!inputs.Supplier_name.trim()) {
-      newErrors.Supplier_name = "Supplier name is required.";
-    } else if (inputs.Supplier_name.length < 2) {
-      newErrors.Supplier_name = "Supplier name must be at least 2 characters.";
-    } else if (!/^[A-Za-z\s.]+$/.test(inputs.Supplier_name)) {
-      newErrors.Supplier_name = "Supplier name can contain letters, spaces, and dots only.";
-    }
-
-    // Phone Number
-    const phone = inputs.Phone_number?.toString().trim();
-    if (!/^0\d{9}$/.test(phone)) {
-      newErrors.Phone_number = "Phone number must start with 0 and be exactly 10 digits.";
-    }
-
-    // Email
-    if (!inputs.Email.trim()) {
-      newErrors.Email = "Email is required.";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(inputs.Email.trim())
-    ) {
-      newErrors.Email = "Email format is invalid.";
-    }
-
-    // Address
-    if (!inputs.Address.trim()) {
-      newErrors.Address = "Address is required.";
-    } else if (inputs.Address.trim().length < 5) {
-      newErrors.Address = "Address must be at least 5 characters.";
-    }
-
+    Object.keys(inputs).forEach((key) => {
+      const error = validateField(key, inputs[key]);
+      if (error) newErrors[key] = error;
+    });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ On submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validate()) return;
+    if (!validateForm()) return;
 
     try {
       const res = await axios.post("http://localhost:5000/suppliers", {
@@ -86,10 +105,10 @@ function AddSupplier() {
       });
 
       const codeNumber = res.data.Supplier_id;
-      const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
+      const formattedCode = "SUP" + String(codeNumber).padStart(3, "0");
       setInputs((prev) => ({ ...prev, Supplier_id: formattedCode }));
 
-      window.alert("✅ Add Supplier Details Successful!");
+      alert("✅ Supplier added successfully!");
       navigate("/supplierdetails");
     } catch (err) {
       console.error("Error adding supplier:", err);
@@ -99,8 +118,9 @@ function AddSupplier() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       <SupplyNav />
+
       <div className="flex-grow flex justify-center items-center py-8 px-4">
-        <div className="w-full max-w-xl bg-white p-8 rounded shadow">
+        <div className="w-full max-w-xl bg-white p-8 rounded shadow-lg">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
             Add Supplier Details
           </h1>
@@ -130,17 +150,23 @@ function AddSupplier() {
                 name="Supplier_name"
                 value={inputs.Supplier_name}
                 onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Supplier_name
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Supplier_name && (
-                <p className="text-red-500 text-sm mt-1">{errors.Supplier_name}</p>
+              {touched.Supplier_name && errors.Supplier_name && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.Supplier_name}
+                </p>
               )}
             </div>
 
             {/* Phone Number */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
+              <label className="block text-gray-600 font-medium mb-1">
                 Phone Number
               </label>
               <input
@@ -148,45 +174,60 @@ function AddSupplier() {
                 name="Phone_number"
                 value={inputs.Phone_number}
                 onChange={handleChange}
-                required
+                onBlur={handleBlur}
                 maxLength="10"
-                className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
                   errors.Phone_number
                     ? "border-red-500 focus:ring-red-400"
-                    : "border-gray-300 focus:ring-blue-400"
+                    : "border-gray-300 focus:ring-indigo-400"
                 }`}
               />
-              {errors.Phone_number && (
-                <p className="text-red-500 text-sm mt-1">{errors.Phone_number}</p>
+              {touched.Phone_number && errors.Phone_number && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.Phone_number}
+                </p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Email</label>
+              <label className="block text-gray-600 font-medium mb-1">
+                Email
+              </label>
               <input
                 type="text"
                 name="Email"
                 value={inputs.Email}
                 onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Email
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Email && (
+              {touched.Email && errors.Email && (
                 <p className="text-red-500 text-sm mt-1">{errors.Email}</p>
               )}
             </div>
 
             {/* Address */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Address</label>
+              <label className="block text-gray-600 font-medium mb-1">
+                Address
+              </label>
               <textarea
                 name="Address"
                 value={inputs.Address}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Address
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Address && (
+              {touched.Address && errors.Address && (
                 <p className="text-red-500 text-sm mt-1">{errors.Address}</p>
               )}
             </div>

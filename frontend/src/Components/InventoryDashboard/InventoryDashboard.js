@@ -98,51 +98,50 @@ function InventoryDashboard() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Fixed Sidebar */}
-      
       <div className="w-52 fixed top-0 left-0 h-screen overflow-y-auto">
         <MainIntNav />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-52 overflow-y-auto">
-           <Header />
-        {/* Header */}
-        <div className="bg-white text-[#1B5E20] px-6 py-4 shadow-md rounded-md">
-  <h1 className="text-3xl font-semibold">Inventory Management</h1>
-  <p className="text-xl">Dashboard</p>
-</div>
-
+      <div className="flex-1 ml-52 h-screen overflow-y-auto">
+        {/* Fixed Header */}
+        <div className="sticky top-0 z-20 bg-gray-100 shadow-md">
+          <Header />
+          <div className="bg-white text-[#1B5E20] px-6 py-4 shadow-md rounded-md">
+            <h1 className="text-3xl font-semibold">Inventory Management</h1>
+            <p className="text-xl">Dashboard</p>
+          </div>
+        </div>
 
         {/* Stats Cards */}
-       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 py-6 bg-white">
-  {[
-    { label: "Total Item Stock", value: totalStock ,color: "text-black" },
-    { label: "Low Item Stock", value: lowStock, color: "text-yellow-500" },
-    { label: "Purchases", value: purchases.length, color: "text-red-500" },
-    { label: "Suppliers", value: suppliers.length ,color: "text-black"},
-  ].map((stat, index) => (
-    <div
-      key={index}
-      className="bg-green-200/60 text-black p-4 rounded shadow-md flex flex-col justify-between"
-    >
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-white text-lg">📦</span>
-          <span className="text-sm font-semibold">{stat.label}</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 py-6 bg-white">
+          {[
+            { label: "Total Item Stock", value: totalStock, color: "text-black" },
+            { label: "Low Item Stock", value: lowStock, color: "text-yellow-500" },
+            { label: "Purchases", value: purchases.length, color: "text-red-500" },
+            { label: "Suppliers", value: suppliers.length, color: "text-black" },
+          ].map((stat, index) => (
+            <div
+              key={index}
+              className="bg-green-200/60 text-black p-4 rounded shadow-md flex flex-col justify-between"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-white text-lg">📦</span>
+                  <span className="text-sm font-semibold">{stat.label}</span>
+                </div>
+                <span className="text-xs opacity-70">↗</span>
+              </div>
+              <div
+                className={`text-3xl font-bold mt-2 ${
+                  stat.color ? stat.color + " drop-shadow" : "text-white"
+                }`}
+              >
+                {stat.value}
+              </div>
+            </div>
+          ))}
         </div>
-        <span className="text-xs opacity-70">↗</span>
-      </div>
-      <div
-        className={`text-3xl font-bold mt-2 ${
-          stat.color ? stat.color + " drop-shadow" : "text-white"
-        }`}
-      >
-        {stat.value}
-      </div>
-    </div>
-  ))}
-</div>
-
 
         {/* Charts Section */}
         <div className="flex flex-col md:flex-row px-6 py-4 gap-4">

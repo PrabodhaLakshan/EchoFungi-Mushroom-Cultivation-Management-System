@@ -29,18 +29,23 @@ function SupplierReport() {
 
   // Auto-filter suppliers by search
   useEffect(() => {
-    const trimmedQuery = searchQuery.trim().toLowerCase();
-    if (!trimmedQuery) {
-      setFilteredSuppliers(suppliers);
-      return;
-    }
-    const filtered = suppliers.filter(
-      (sup) =>
-        sup.Supplier_id?.toString().toLowerCase().includes(trimmedQuery) ||
-        sup.Supplier_name?.toLowerCase().includes(trimmedQuery)
-    );
-    setFilteredSuppliers(filtered);
-  }, [searchQuery, suppliers]);
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+
+  if (!trimmedQuery) {
+    setFilteredSuppliers(suppliers);
+    return;
+  }
+
+  const filtered = suppliers.filter(
+    (sup) =>
+      sup.Supplier_id?.toString().toLowerCase().includes(trimmedQuery) ||
+      sup.Supplier_name?.toLowerCase().startsWith(trimmedQuery)
+  );
+
+  setFilteredSuppliers(filtered);
+}, [searchQuery, suppliers]);
+
+
 const generatePDF = () => {
   const doc = new jsPDF("p", "pt", "a4");
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -52,13 +57,13 @@ const generatePDF = () => {
   const formattedTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   // Your logo in base64
-  const logoBase64 = "logo.png"; // put your full base64 here
+  const logoBase64 = "logo.png"; 
 
   const addHeader = () => {
     const headerHeight = 60;
 
     // Green rectangle
-    doc.setFillColor(34, 139, 34);
+    doc.setFillColor(20, 83, 45);
     doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
 
     // Logo on left
@@ -88,7 +93,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
     // Report title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(0);
+    doc.setTextColor(20,83,45);
     doc.text("Supplier Report", margin, 110);
 
     // Line below title
@@ -102,8 +107,8 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
     doc.text(`Total Suppliers: ${filteredSuppliers.length}`, margin, 135);
 
     // Border around the page
-    doc.setDrawColor(34, 139, 34);
-    doc.setLineWidth(1);
+    doc.setDrawColor(20, 83, 45);
+    doc.setLineWidth(2);
     doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);
   };
 
@@ -140,7 +145,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
         ])
       : [["No data available", "", "", "", ""]],
     styles: { fontSize: 9, halign: "center" },
-    headStyles: { fillColor: [34, 139, 34], textColor: 255, fontStyle: "bold" },
+    headStyles: { fillColor: [20, 83, 45], textColor: 255, fontStyle: "bold" },
     didDrawPage: (data) => {
       const pageNumber = doc.internal.getNumberOfPages();
       addHeader();

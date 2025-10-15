@@ -44,12 +44,18 @@ function IntReport() {
     }
 
     if (searchQuery.trim()) {
-      result = result.filter(
-        (item) =>
-          item.Item_code &&
-          item.Item_code.toString().toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+  const trimmed = searchQuery.trim().toLowerCase();
+
+  result = result.filter(
+    (item) =>
+      (item.Item_code &&
+        item.Item_code.toString().toLowerCase().includes(trimmed)) ||
+      (item.Item_name &&
+        item.Item_name.toString().toLowerCase().startsWith(trimmed))
+  );
+}
+
+
 
     setFilteredItems(result);
   }, [selectedMonth, searchQuery, items]);
@@ -82,7 +88,7 @@ function IntReport() {
     const headerHeight = 60;
 
     
-    doc.setFillColor(34, 139, 34);
+    doc.setFillColor(20, 83, 45);
     doc.rect(margin, 20, pageWidth - 2 * margin, headerHeight, "F");
 
     
@@ -108,7 +114,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
       
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0);
+      doc.setTextColor(20,83,45);
       doc.text("Inventory Movement Report", margin, 110);
 
       
@@ -123,7 +129,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
       doc.text(`Report Period: ${reportPeriod}`, margin, 150);
 
       
-      doc.setDrawColor(34, 139, 34);
+      doc.setDrawColor(20, 83, 45);
       doc.setLineWidth(1);
       doc.rect(margin - 5, 15, pageWidth - 2 * margin + 10, pageHeight - 30);
     };
@@ -156,7 +162,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
     // Dynamic tables with evenly spaced columns
     const drawTable = (columns, data, title) => {
       doc.setFontSize(11);
-      doc.setTextColor(34, 139, 34);
+      doc.setTextColor(20, 83, 45);
       doc.text(title, margin, yPosition - 10);
 
       autoTable(doc, {
@@ -170,7 +176,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
           cellPadding: 4,
         },
         headStyles: {
-          fillColor: [34, 139, 34],
+          fillColor: [20, 83, 45],
           textColor: 255,
           fontStyle: "bold",
         },
@@ -250,7 +256,7 @@ doc.text("Inventory Management System", margin + 50, textY + 15);
           <div className="flex gap-3">
             <input
               type="text"
-              placeholder="Search by Item Code..."
+              placeholder="Search by Item Code or Item Name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="px-4 py-2 border rounded-md"

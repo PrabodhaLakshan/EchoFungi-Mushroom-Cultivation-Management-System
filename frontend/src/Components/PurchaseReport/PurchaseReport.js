@@ -34,150 +34,144 @@ function PurchaseReport() {
     }
     const filtered = purchases.filter(
       (p) =>
-        (p.Purchase_id ?? "").toString().toLowerCase().includes(query) ||
-        (p.Item_name ?? "").toLowerCase().includes(query)
+        (p.Purchase_id ?? "")
+          .toString()
+          .toLowerCase()
+          .includes(query) ||
+        (p.Item_name ?? "").toLowerCase().startsWith(query)
     );
     setFilteredPurchases(filtered);
   }, [searchQuery, purchases]);
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+ const generatePDF = () => {
+  const doc = new jsPDF("p", "pt", "a4");
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40; // main border margin
+  const headerInset = 10; // header inside border
 
-    const borderMargin = 15;
-    const contentMargin = borderMargin + 10;
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString();
+  const formattedTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString();
-    const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-    const generatedText = `Generated on: ${formattedDate} at ${formattedTime}`;
+  const logoBase64 = "logo.png"; // replace with your actual base64 logo
 
-    const fromDate = purchases[0]?.Purchase_date
-      ? new Date(purchases[0].Purchase_date).toLocaleDateString()
-      : "N/A";
-    const toDate = purchases[purchases.length - 1]?.Purchase_date
-      ? new Date(purchases[purchases.length - 1].Purchase_date).toLocaleDateString()
-      : "N/A";
+  // 1️⃣ Draw border
+  doc.setDrawColor(20, 83, 45);
+  doc.setLineWidth(1);
+  doc.rect(margin, margin, pageWidth - 2 * margin, pageHeight - 2 * margin);
 
-    // 🔲 Border
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.5);
-    doc.rect(borderMargin, borderMargin, pageWidth - 2 * borderMargin, pageHeight - 2 * borderMargin);
+  // 2️⃣ Header inside border
+  const headerHeight = 60;
+  const headerX = margin + headerInset;
+  const headerY = margin + headerInset;
+  const headerWidth = pageWidth - 2 * (margin + headerInset);
 
-    // 🟩 Header
+  // Green rectangle
+  doc.setFillColor(20, 83, 45);
+  doc.rect(headerX, headerY, headerWidth, headerHeight, "F");
 
-    const logoBase64 = "logo.png";
-    const headerHeight = 30;
-const headerInset = 3;
+  // Logo
+  const logoSize = 35;
+  const logoX = headerX + 10;
+  const logoY = headerY + (headerHeight - logoSize) / 2;
+  doc.addImage(logoBase64, "PNG", logoX, logoY, logoSize, logoSize);
 
+  // Text
+  const textX = logoX + logoSize + 10;
+  const textCenterY = headerY + headerHeight / 2;
 
-const logoSize = 12; 
-const logoX = borderMargin + headerInset + 5; 
-const logoY = borderMargin + 10; 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.text("EcoFungi", textX, textCenterY - 2);
 
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("Inventory Management System", textX, textCenterY + 12);
 
-doc.setFillColor(34, 139, 34); 
-doc.rect(
-  borderMargin + headerInset, 
-  borderMargin + 2,           
-  pageWidth - 2 * (borderMargin + headerInset),
-  headerHeight,
-  "F"
-);
+  // Date/time (right)
+  const dateText = `Generated on: ${formattedDate} at ${formattedTime}`;
+  doc.setFontSize(10);
+  doc.text(dateText, headerX + headerWidth - doc.getTextWidth(dateText) - 10, textCenterY + 4);
 
+  // 3️⃣ Report Title below header
+  const titleY = headerY + headerHeight + 20; // leave some spacing
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(20, 83, 45);
+  doc.text("Purchase Report", margin + 10, titleY);
 
-doc.addImage(logoBase64, "PNG", logoX, logoY, logoSize, logoSize);
+  // Line under title
+  doc.setDrawColor(100);
+  doc.setLineWidth(0.5);
+  doc.line(margin + 10, titleY + 3, pageWidth - margin - 10, titleY + 3);
 
+  // Info
+  const fromDate = purchases[0]?.Purchase_date
+    ? new Date(purchases[0].Purchase_date).toLocaleDateString()
+    : "N/A";
+  const toDate = purchases[purchases.length - 1]?.Purchase_date
+    ? new Date(purchases[purchases.length - 1].Purchase_date).toLocaleDateString()
+    : "N/A";
 
-const textStartX = logoX + logoSize + 3; 
-const textBaseY = borderMargin + 20; 
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Total Records: ${filteredPurchases.length}`, margin + 10, titleY + 15);
+  doc.text(`Report Period: ${fromDate} - ${toDate}`, margin + 10, titleY + 30);
 
+  // 4️⃣ Table
+  const tableColumns = ["Purchase ID", "Supplier ID", "Item Name", "Purchase Date", "Price"];
+  const tableRows = filteredPurchases.map((p) => [
+    p.Purchase_id,
+    p.Supplier_id,
+    p.Item_name,
+    new Date(p.Purchase_date).toLocaleDateString(),
+    `Rs.${p.Price}`,
+  ]);
 
-doc.setTextColor(255, 255, 255);
-doc.setFontSize(16);
-doc.setFont("helvetica", "bold");
-doc.text("EcoFungi", textStartX, textBaseY);
+  autoTable(doc, {
+    head: [tableColumns],
+    body: tableRows,
+    startY: titleY + 45,
+    theme: "grid",
+    headStyles: {
+      fillColor: [20, 83, 45],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      halign: "center",
+    },
+    bodyStyles: {
+      halign: "center",
+      fontSize: 9,
+    },
+    margin: { left: margin + 10, right: margin + 10 },
+  });
 
+  // 5️⃣ Notes
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(9);
+  doc.setTextColor(90);
+  doc.text(
+    "Note: This report contains purchase records collected by the EcoFungi system.",
+    margin + 10,
+    finalY
+  );
+  doc.text("For questions or concerns, please contact the system administrator.", margin + 10, finalY + 12);
 
-doc.setFontSize(10);
-doc.setFont("helvetica", "normal");
-doc.text("Inventory Management System", textStartX, textBaseY + 8);
+  // 6️⃣ Footer
+  const footerY = pageHeight - margin - 10;
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.5);
+  doc.line(margin + 10, footerY - 5, pageWidth - margin - 10, footerY - 5);
+  doc.setFontSize(8);
+  doc.setTextColor(90);
+  doc.text("EcoFungi Inventory Management System", margin + 10, footerY);
+  const pageText = `Page 1 of ${doc.internal.getNumberOfPages()}`;
+  doc.text(pageText, pageWidth - margin - doc.getTextWidth(pageText), footerY);
 
-
-    doc.setFontSize(9);
-    doc.text(generatedText, pageWidth - contentMargin - 70, borderMargin + 26);
-
-    // 🟨 Title
-    const titleY = borderMargin + headerHeight + 12;
-    doc.setTextColor(0);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Purchase Report", contentMargin, titleY);
-
-    // ➖ Line
-    doc.setDrawColor(100);
-    doc.setLineWidth(0.5);
-    doc.line(contentMargin, titleY + 3, pageWidth - contentMargin, titleY + 3);
-
-    // 📋 Info
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Total Records: ${filteredPurchases.length}`, contentMargin, titleY + 10);
-    doc.text(`Report Period: ${fromDate} - ${toDate}`, contentMargin, titleY + 16);
-
-    // 📊 Table
-    const tableColumn = ["Purchase ID", "Supplier ID", "Item Name", "Purchase Date", "Price"];
-    const tableRows = filteredPurchases.map((p) => [
-      p.Purchase_id,
-      p.Supplier_id,
-      p.Item_name,
-      new Date(p.Purchase_date).toLocaleDateString(),
-      `Rs.${p.Price}`,
-    ]);
-
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: titleY + 22,
-      theme: "grid",
-      headStyles: {
-        fillColor: [34, 139, 34],
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-        halign: "center",
-      },
-      bodyStyles: {
-        halign: "center",
-        fontSize: 9,
-      },
-      margin: { left: contentMargin, right: contentMargin },
-    });
-
-    // 📝 Notes
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(9);
-    doc.setTextColor(90);
-    doc.text("Note: This report contains purchase records collected by the EcoFungi system.", contentMargin, finalY);
-    doc.text("For questions or concerns, please contact the system administrator.", contentMargin, finalY + 5);
-
-    // 📅 Footer
-    const footerY = pageHeight - borderMargin - 5;
-    doc.setDrawColor(200);
-    doc.setLineWidth(0.5);
-    doc.line(contentMargin, footerY - 4, pageWidth - contentMargin, footerY - 4);
-
-    doc.setFontSize(8);
-    doc.setTextColor(90);
-    doc.text("EcoFungi Inventory Management System", contentMargin, footerY);
-    const pageText = `Page 1 of ${doc.internal.getNumberOfPages()}`;
-    const pageTextWidth = doc.getTextWidth(pageText);
-    doc.text(pageText, pageWidth - contentMargin - pageTextWidth, footerY);
-
-    doc.text(generatedText, contentMargin, footerY - 6);
-
-    doc.save(`EcoFungi_Purchase_Report_${now.toISOString().split("T")[0]}.pdf`);
-  };
+  doc.save(`EcoFungi_Purchase_Report_${now.toISOString().split("T")[0]}.pdf`);
+};
 
   return (
     <div className="flex bg-gray-100 min-h-screen">

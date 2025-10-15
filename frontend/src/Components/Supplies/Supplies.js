@@ -33,22 +33,23 @@ function Supplies() {
 
   // Auto-search when typing
   useEffect(() => {
-    const trimmedQuery = searchQuery.trim();
+  const trimmedQuery = searchQuery.trim().toLowerCase();
 
-    if (trimmedQuery === "") {
-      setSuppliers(originalSuppliers);
-      setNoResults(false);
-    } else {
-      const filtered = originalSuppliers.filter(
-        (supplier) =>
-          supplier.Supplier_id?.toString().toLowerCase() ===
-          trimmedQuery.toLowerCase()
-      );
+  if (trimmedQuery === "") {
+    setSuppliers(originalSuppliers);
+    setNoResults(false);
+  } else {
+    const filtered = originalSuppliers.filter(
+      (supplier) =>
+        supplier.Supplier_id?.toString().toLowerCase().startsWith(trimmedQuery) ||
+        supplier.Supplier_name?.toLowerCase().startsWith(trimmedQuery)
+    );
 
-      setSuppliers(filtered);
-      setNoResults(filtered.length === 0);
-    }
-  }, [searchQuery, originalSuppliers]);
+    setSuppliers(filtered);
+    setNoResults(filtered.length === 0);
+  }
+}, [searchQuery, originalSuppliers]);
+
 
   // Delete supplier
   const handleDelete = (id) => {
@@ -82,7 +83,7 @@ function Supplies() {
     type="text"
     value={searchQuery}
     onChange={(e) => setSearchQuery(e.target.value)}
-    placeholder="🔎 Search by Supplier ID..."
+    placeholder="🔎 Search by Supplier ID or Supplier Name..."
     className="border border-gray-300 px-4 py-2 rounded-lg w-full max-w-md shadow-sm focus:outline-none focus:ring focus:ring-green-300"
   />
 </div>

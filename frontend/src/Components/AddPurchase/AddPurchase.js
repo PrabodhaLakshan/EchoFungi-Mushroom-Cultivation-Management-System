@@ -15,10 +15,11 @@ function AddPurchase() {
   });
 
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [serverErrors, setServerErrors] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
-  // ✅ Fetch suppliers
+  // ✅ Fetch supplier list
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
@@ -32,11 +33,51 @@ function AddPurchase() {
         console.error("Error fetching suppliers:", err);
       }
     };
-
     fetchSuppliers();
   }, []);
 
-  // ✅ Handle input change with real-time error clearing
+  // ✅ Field-level validation
+  const validateField = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "Supplier_id":
+        if (!value) error = "Supplier is required.";
+        break;
+
+      case "Item_name":
+        if (!value.trim()) error = "Item name is required.";
+        else if (value.length < 2)
+          error = "Item name must be at least 2 characters.";
+        else if (!/^[A-Za-z0-9\s\-_.]+$/.test(value))
+          error = "Item name can contain letters, numbers, spaces, dots, or dashes.";
+        break;
+
+      case "Purchase_date":
+        if (!value) error = "Purchase date is required.";
+        else if (new Date(value) > new Date())
+          error = "Purchase date cannot be in the future.";
+        break;
+
+      case "Price":
+        if (value === "") error = "Price is required.";
+        else {
+          const priceRegex = /^\d+(\.\d{1,2})?$/;
+          if (!priceRegex.test(value))
+            error = "Price must be a valid number (max 2 decimals).";
+          else if (Number(value) <= 0)
+            error = "Price must be greater than 0.";
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
+  };
+
+  // ✅ Handle input change (real-time validation)
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -45,51 +86,45 @@ function AddPurchase() {
       [name]: value,
     }));
 
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: "",
+    // Live validation only after user touched the field
+    if (touched[name]) {
+      const fieldError = validateField(name, value);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: fieldError,
+      }));
+    }
+  };
+
+  // ✅ Handle blur to mark field as touched and validate
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    const fieldError = validateField(name, value);
+    setErrors((prev) => ({
+      ...prev,
+      [name]: fieldError,
     }));
   };
 
-  // ✅ Form validation
-  const validate = () => {
+  // ✅ Validate full form before submit
+  const validateForm = () => {
     const newErrors = {};
-
-    if (!inputs.Supplier_id) {
-      newErrors.Supplier_id = "Supplier is required.";
-    }
-
-    if (!inputs.Item_name.trim()) {
-      newErrors.Item_name = "Item name is required.";
-    } else if (inputs.Item_name.length < 2) {
-      newErrors.Item_name = "Item name must be at least 2 characters.";
-    }
-
-    if (!inputs.Purchase_date) {
-      newErrors.Purchase_date = "Purchase date is required.";
-    } else if (new Date(inputs.Purchase_date) > new Date()) {
-      newErrors.Purchase_date = "Purchase date cannot be in the future.";
-    }
-
-    if (inputs.Price === "") {
-      newErrors.Price = "Price is required.";
-    } else {
-      const priceRegex = /^\d+(\.\d{1,2})?$/;
-      if (!priceRegex.test(inputs.Price)) {
-        newErrors.Price = "Price must be a valid number with up to 2 decimal places.";
-      }
-    }
-
+    Object.keys(inputs).forEach((key) => {
+      const error = validateField(key, inputs[key]);
+      if (error) newErrors[key] = error;
+    });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Submit form
+  // ✅ Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerErrors([]);
 
-    if (!validate()) return;
+    if (!validateForm()) return;
 
     try {
       const res = await axios.post("http://localhost:5000/purchases", {
@@ -103,7 +138,7 @@ function AddPurchase() {
       const formattedCode = "ITEM" + String(codeNumber).padStart(3, "0");
       setInputs((prev) => ({ ...prev, Purchase_id: formattedCode }));
 
-      alert("✅ Add Purchase Details Successful!");
+      alert("✅ Purchase Added Successfully!");
       navigate("/purchasedetails");
     } catch (err) {
       if (err.response?.data?.errors) {
@@ -124,7 +159,7 @@ function AddPurchase() {
             Add Purchase
           </h1>
 
-          {/* ✅ Server-side validation errors */}
+          {/* Server Errors */}
           {serverErrors.length > 0 && (
             <div className="mb-4 text-red-600">
               <ul className="list-disc ml-5">
@@ -138,7 +173,9 @@ function AddPurchase() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Purchase ID */}
             <div>
-              <label className="block font-medium text-gray-700">Purchase ID</label>
+              <label className="block font-medium text-gray-700">
+                Purchase ID
+              </label>
               <input
                 type="text"
                 name="Purchase_id"
@@ -155,7 +192,12 @@ function AddPurchase() {
                 name="Supplier_id"
                 value={inputs.Supplier_id}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Supplier_id
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               >
                 <option value="">-- Select Supplier --</option>
                 {suppliers.map((sup) => (
@@ -164,33 +206,55 @@ function AddPurchase() {
                   </option>
                 ))}
               </select>
-              {errors.Supplier_id && <p className="text-red-500 text-sm mt-1">{errors.Supplier_id}</p>}
+              {touched.Supplier_id && errors.Supplier_id && (
+                <p className="text-red-500 text-sm mt-1">{errors.Supplier_id}</p>
+              )}
             </div>
 
             {/* Item Name */}
             <div>
-              <label className="block font-medium text-gray-700">Item Name</label>
+              <label className="block font-medium text-gray-700">
+                Item Name
+              </label>
               <input
                 type="text"
                 name="Item_name"
                 value={inputs.Item_name}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Item_name
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Item_name && <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>}
+              {touched.Item_name && errors.Item_name && (
+                <p className="text-red-500 text-sm mt-1">{errors.Item_name}</p>
+              )}
             </div>
 
             {/* Purchase Date */}
             <div>
-              <label className="block font-medium text-gray-700">Purchase Date</label>
+              <label className="block font-medium text-gray-700">
+                Purchase Date
+              </label>
               <input
                 type="date"
                 name="Purchase_date"
                 value={inputs.Purchase_date}
                 onChange={handleChange}
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                onBlur={handleBlur}
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Purchase_date
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Purchase_date && <p className="text-red-500 text-sm mt-1">{errors.Purchase_date}</p>}
+              {touched.Purchase_date && errors.Purchase_date && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.Purchase_date}
+                </p>
+              )}
             </div>
 
             {/* Price */}
@@ -201,13 +265,20 @@ function AddPurchase() {
                 name="Price"
                 value={inputs.Price}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 step="0.01"
-                className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded"
+                className={`mt-1 block w-full px-4 py-2 border rounded ${
+                  errors.Price
+                    ? "border-red-500 focus:ring-red-400"
+                    : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Price && <p className="text-red-500 text-sm mt-1">{errors.Price}</p>}
+              {touched.Price && errors.Price && (
+                <p className="text-red-500 text-sm mt-1">{errors.Price}</p>
+              )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <div className="text-center">
               <button
                 type="submit"

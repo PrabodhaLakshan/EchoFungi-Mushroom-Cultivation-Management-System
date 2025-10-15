@@ -12,6 +12,7 @@ function UpdateSupplier() {
     Address: ''
   });
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -36,6 +37,35 @@ function UpdateSupplier() {
     fetchSupplier();
   }, [id]);
 
+  // Field validation
+  const validateField = (name, value) => {
+    let error = '';
+
+    switch (name) {
+      case 'Supplier_name':
+        if (!value.trim()) error = "Supplier name is required.";
+        else if (value.length < 2) error = "Supplier name must be at least 2 characters.";
+        else if (!/^[A-Za-z\s.]+$/.test(value)) error = "Supplier name can contain letters, spaces, and dots only.";
+        break;
+      case 'Phone_number':
+        if (!/^0\d{9}$/.test(value)) error = "Phone number must start with 0 and be exactly 10 digits.";
+        break;
+      case 'Email':
+        if (!value.trim()) error = "Email is required.";
+        else if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(value.trim()))
+          error = "Email format is invalid.";
+        break;
+      case 'Address':
+        if (!value.trim()) error = "Address is required.";
+        else if (value.length < 5) error = "Address must be at least 5 characters.";
+        break;
+      default:
+        break;
+    }
+
+    return error;
+  };
+
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,51 +73,31 @@ function UpdateSupplier() {
     // Allow only digits for phone number
     if (name === "Phone_number" && !/^\d*$/.test(value)) return;
 
-    setInputs(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setInputs(prev => ({ ...prev, [name]: value }));
 
-    // Remove existing error on change
-    setErrors(prev => ({ ...prev, [name]: '' }));
+    // Real-time validation if field has been touched
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors(prev => ({ ...prev, [name]: error }));
+    }
   };
 
-  // Validation
-  const validate = () => {
+  // Handle blur to mark field as touched
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  // Validate all fields before submitting
+  const validateForm = () => {
     const newErrors = {};
-
-    // Supplier Name
-    if (!inputs.Supplier_name.trim()) {
-      newErrors.Supplier_name = "Supplier name is required.";
-    } else if (inputs.Supplier_name.length < 2) {
-      newErrors.Supplier_name = "Supplier name must be at least 2 characters.";
-    } else if (!/^[A-Za-z\s.]+$/.test(inputs.Supplier_name)) {
-      newErrors.Supplier_name = "Supplier name can contain letters, spaces, and dots only.";
-    }
-
-    // Phone Number
-    const phone = inputs.Phone_number?.toString().trim();
-    if (!/^0\d{9}$/.test(phone)) {
-      newErrors.Phone_number = "Phone number must start with 0 and be exactly 10 digits.";
-    }
-
-    // Email
-     if (!inputs.Email.trim()) {
-      newErrors.Email = "Email is required.";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(inputs.Email.trim())
-    ) {
-      newErrors.Email = "Email format is invalid.";
-    }
-
-
-    // Address
-    if (!inputs.Address?.trim()) {
-      newErrors.Address = "Address is required.";
-    } else if (inputs.Address.length < 5) {
-      newErrors.Address = "Address must be at least 5 characters.";
-    }
-
+    Object.keys(inputs).forEach(key => {
+      const error = validateField(key, inputs[key]);
+      if (error) newErrors[key] = error;
+    });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -95,7 +105,7 @@ function UpdateSupplier() {
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validateForm()) return;
 
     try {
       await axios.put(`http://localhost:5000/suppliers/${id}`, {
@@ -116,14 +126,12 @@ function UpdateSupplier() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       <SupplyNav />
-
       <div className="flex-1 flex justify-center items-start py-10">
         <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-xl">
           <h1 className="text-2xl font-bold mb-6 text-center">Update Supplier Details</h1>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-
-            {/* Supplier ID (read-only) */}
+            {/* Supplier ID */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">Supplier ID</label>
               <input
@@ -143,9 +151,12 @@ function UpdateSupplier() {
                 name="Supplier_name"
                 value={inputs.Supplier_name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 ${
+                  errors.Supplier_name ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
+                }`}
               />
-              {errors.Supplier_name && (
+              {touched.Supplier_name && errors.Supplier_name && (
                 <p className="text-red-500 text-sm mt-1">{errors.Supplier_name}</p>
               )}
             </div>
@@ -158,12 +169,13 @@ function UpdateSupplier() {
                 name="Phone_number"
                 value={inputs.Phone_number}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 maxLength="10"
                 className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 ${
                   errors.Phone_number ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
                 }`}
               />
-              {errors.Phone_number && (
+              {touched.Phone_number && errors.Phone_number && (
                 <p className="text-red-500 text-sm mt-1">{errors.Phone_number}</p>
               )}
             </div>
@@ -176,9 +188,12 @@ function UpdateSupplier() {
                 name="Email"
                 value={inputs.Email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 ${
+                  errors.Email ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
+                }`}
               />
-              {errors.Email && (
+              {touched.Email && errors.Email && (
                 <p className="text-red-500 text-sm mt-1">{errors.Email}</p>
               )}
             </div>
@@ -190,15 +205,18 @@ function UpdateSupplier() {
                 name="Address"
                 value={inputs.Address}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 rows="3"
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 ${
+                  errors.Address ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
+                }`}
               />
-              {errors.Address && (
+              {touched.Address && errors.Address && (
                 <p className="text-red-500 text-sm mt-1">{errors.Address}</p>
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <div className="text-center">
               <button
                 type="submit"
@@ -207,7 +225,6 @@ function UpdateSupplier() {
                 Update
               </button>
             </div>
-
           </form>
         </div>
       </div>

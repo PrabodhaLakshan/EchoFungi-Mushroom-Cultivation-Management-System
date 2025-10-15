@@ -5,34 +5,31 @@ import InventoryNav from "../InventoryNav/InventoryNav";
 
 function UpdateInventory() {
   const [inputs, setInputs] = useState({});
-  const [purchases, setPurchases] = useState([]);
   const [errors, setErrors] = useState({});
-  const navigate = useNavigate();
+  const [touched, setTouched] = useState({});
+  const [purchases, setPurchases] = useState([]);
   const { id } = useParams();
+  const navigate = useNavigate();
 
   // Fetch item details
   useEffect(() => {
-    const fetchHandler = async () => {
+    const fetchItem = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/items/${id}`);
-        if (res.data && res.data.items) {
-          setInputs(res.data.items);
-        }
+        if (res.data && res.data.items) setInputs(res.data.items);
       } catch (err) {
-        console.error("Error fetching item data:", err);
+        console.error("Error fetching item:", err);
       }
     };
-    fetchHandler();
+    fetchItem();
   }, [id]);
 
-  // Fetch purchase IDs
+  // Fetch purchases
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
         const res = await axios.get("http://localhost:5000/purchases");
-        if (Array.isArray(res.data.purchases)) {
-          setPurchases(res.data.purchases);
-        }
+        if (Array.isArray(res.data.purchases)) setPurchases(res.data.purchases);
       } catch (err) {
         console.error("Error fetching purchases:", err);
       }
@@ -40,70 +37,88 @@ function UpdateInventory() {
     fetchPurchases();
   }, []);
 
-  // Validation logic
-  const validate = () => {
+  // Field-level validation
+  const validateField = (name, value) => {
+    let error = "";
+    switch (name) {
+      case "Category":
+        if (!value) error = "Category is required.";
+        break;
+      case "Item_name":
+        if (!value?.trim()) error = "Item name is required.";
+        else if (value.length < 2) error = "Item name must be at least 2 characters.";
+        break;
+      case "Quantity":
+        if (value === "" || value === undefined) error = "Quantity is required.";
+        else if (Number(value) < 0) error = "Quantity cannot be negative.";
+        else if (Number(value) > 100) error = "Quantity cannot exceed 100.";
+        break;
+      case "Unit":
+        if (!value?.trim()) error = "Unit is required.";
+        break;
+      case "Received_date":
+        if (!value) error = "Received date is required.";
+        else if (new Date(value) > new Date()) error = "Received date cannot be in the future.";
+        break;
+      case "Expired_date":
+        if (value && inputs.Received_date && new Date(value) < new Date(inputs.Received_date))
+          error = "Expired date cannot be before received date.";
+        break;
+      case "Reorder_level":
+        if (value === "" || value === undefined) error = "Reorder level is required.";
+        else if (Number(value) < 0) error = "Reorder level cannot be negative.";
+        break;
+      case "Purchase_id":
+        if (!value) error = "Purchase ID is required.";
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
+  // Handle input change (real-time validation)
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
+
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
+  // Mark field as touched on blur
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Validate all fields before submit
+  const validateForm = () => {
     const newErrors = {};
-
-    if (!inputs.Category) newErrors.Category = "Category is required.";
-
-    if (!inputs.Item_name?.trim()) {
-      newErrors.Item_name = "Item name is required.";
-    } else if (inputs.Item_name.length < 2) {
-      newErrors.Item_name = "Item name must be at least 2 characters.";
-    }
-
-    if (inputs.Quantity === "" || inputs.Quantity === undefined) {
-      newErrors.Quantity = "Quantity is required.";
-    } else if (Number(inputs.Quantity) < 0) {
-      newErrors.Quantity = "Quantity cannot be negative.";
-    } else if (Number(inputs.Quantity) > 100) {
-      newErrors.Quantity = "Quantity cannot exceed 100.";
-    }
-
-    if (!inputs.Unit?.trim()) newErrors.Unit = "Unit is required.";
-
-    if (!inputs.Received_date) {
-      newErrors.Received_date = "Received date is required.";
-    } else if (new Date(inputs.Received_date) > new Date()) {
-      newErrors.Received_date = "Received date cannot be in the future.";
-    }
-
-    if (inputs.Expired_date) {
-      if (
-        inputs.Received_date &&
-        new Date(inputs.Expired_date) < new Date(inputs.Received_date)
-      ) {
-        newErrors.Expired_date = "Expired date cannot be before received date.";
-      }
-    }
-
-    if (inputs.Reorder_level === "" || inputs.Reorder_level === undefined) {
-      newErrors.Reorder_level = "Reorder level is required.";
-    } else if (Number(inputs.Reorder_level) < 0) {
-      newErrors.Reorder_level = "Reorder level cannot be negative.";
-    }
-
-    if (!inputs.Purchase_id) newErrors.Purchase_id = "Purchase ID is required.";
-
+    Object.keys(inputs).forEach((key) => {
+      const error = validateField(key, inputs[key]);
+      if (error) newErrors[key] = error;
+    });
+    
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
-  // Update item
-  const sendRequest = async () => {
+  // Submit update request
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       await axios.put(`http://localhost:5000/items/${id}`, {
-        Item_code: inputs.Item_code,
-        Category: inputs.Category,
-        Item_name: inputs.Item_name,
+        ...inputs,
         Quantity: Number(inputs.Quantity),
-        Unit: inputs.Unit,
-        Received_date: inputs.Received_date,
-        Expired_date: inputs.Expired_date,
         Reorder_level: Number(inputs.Reorder_level),
-        Description: inputs.Description,
-        Purchase_id: inputs.Purchase_id,
       });
       alert("✅ Inventory item updated successfully!");
       navigate("/itemdetails");
@@ -111,17 +126,6 @@ function UpdateInventory() {
       console.error("Error updating item:", err);
       alert("❌ Failed to update item. Please try again.");
     }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setInputs((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" })); // clear error on change
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) sendRequest();
   };
 
   return (
@@ -153,7 +157,10 @@ function UpdateInventory() {
                 name="Category"
                 value={inputs.Category || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Category ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               >
                 <option value="">-- Select Category --</option>
                 <option value="Raw Material">Raw Material</option>
@@ -161,7 +168,7 @@ function UpdateInventory() {
                 <option value="Packaging">Packaging</option>
                 <option value="Others">Others</option>
               </select>
-              {errors.Category && <p className="text-red-500 text-sm">{errors.Category}</p>}
+              {touched.Category && errors.Category && <p className="text-red-500 text-sm">{errors.Category}</p>}
             </div>
 
             {/* Item Name */}
@@ -172,9 +179,12 @@ function UpdateInventory() {
                 name="Item_name"
                 value={inputs.Item_name || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Item_name ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Item_name && <p className="text-red-500 text-sm">{errors.Item_name}</p>}
+              {touched.Item_name && errors.Item_name && <p className="text-red-500 text-sm">{errors.Item_name}</p>}
             </div>
 
             {/* Quantity */}
@@ -185,9 +195,12 @@ function UpdateInventory() {
                 name="Quantity"
                 value={inputs.Quantity || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Quantity ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Quantity && <p className="text-red-500 text-sm">{errors.Quantity}</p>}
+              {touched.Quantity && errors.Quantity && <p className="text-red-500 text-sm">{errors.Quantity}</p>}
             </div>
 
             {/* Unit */}
@@ -198,9 +211,12 @@ function UpdateInventory() {
                 name="Unit"
                 value={inputs.Unit || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Unit ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Unit && <p className="text-red-500 text-sm">{errors.Unit}</p>}
+              {touched.Unit && errors.Unit && <p className="text-red-500 text-sm">{errors.Unit}</p>}
             </div>
 
             {/* Received Date */}
@@ -211,9 +227,12 @@ function UpdateInventory() {
                 name="Received_date"
                 value={inputs.Received_date ? inputs.Received_date.slice(0, 10) : ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Received_date ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Received_date && <p className="text-red-500 text-sm">{errors.Received_date}</p>}
+              {touched.Received_date && errors.Received_date && <p className="text-red-500 text-sm">{errors.Received_date}</p>}
             </div>
 
             {/* Expired Date */}
@@ -224,9 +243,12 @@ function UpdateInventory() {
                 name="Expired_date"
                 value={inputs.Expired_date ? inputs.Expired_date.slice(0, 10) : ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Expired_date ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Expired_date && <p className="text-red-500 text-sm">{errors.Expired_date}</p>}
+              {touched.Expired_date && errors.Expired_date && <p className="text-red-500 text-sm">{errors.Expired_date}</p>}
             </div>
 
             {/* Reorder Level */}
@@ -237,9 +259,12 @@ function UpdateInventory() {
                 name="Reorder_level"
                 value={inputs.Reorder_level || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Reorder_level ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               />
-              {errors.Reorder_level && <p className="text-red-500 text-sm">{errors.Reorder_level}</p>}
+              {touched.Reorder_level && errors.Reorder_level && <p className="text-red-500 text-sm">{errors.Reorder_level}</p>}
             </div>
 
             {/* Description */}
@@ -249,7 +274,7 @@ function UpdateInventory() {
                 name="Description"
                 value={inputs.Description || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 border-gray-300 focus:ring-indigo-400"
               />
             </div>
 
@@ -260,7 +285,10 @@ function UpdateInventory() {
                 name="Purchase_id"
                 value={inputs.Purchase_id || ""}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                onBlur={handleBlur}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  errors.Purchase_id ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-indigo-400"
+                }`}
               >
                 <option value="">Select Purchase ID</option>
                 {purchases.map((purchase) => (
@@ -269,7 +297,7 @@ function UpdateInventory() {
                   </option>
                 ))}
               </select>
-              {errors.Purchase_id && <p className="text-red-500 text-sm">{errors.Purchase_id}</p>}
+              {touched.Purchase_id && errors.Purchase_id && <p className="text-red-500 text-sm">{errors.Purchase_id}</p>}
             </div>
 
             {/* Submit Button */}
