@@ -32,10 +32,20 @@ function Product() {
     }
   };
 
-  // 📄 Generate PDF report
+  // ✅ Filter function (matches only from beginning)
+  const filteredProducts = products.filter((p) => {
+    const term = searchTerm.toLowerCase().trim();
+    if (term === "") return true;
+    return (
+      p.ProductName?.toLowerCase().startsWith(term) ||
+      p.MushroomType?.toLowerCase().startsWith(term)
+    );
+  });
+
+  // 📄 Generate PDF report — only for filtered results
   const generatePDF = () => {
-    if (!products || products.length === 0) {
-      alert("No product data available to generate PDF.");
+    if (!filteredProducts || filteredProducts.length === 0) {
+      alert("No matching product data available to generate PDF.");
       return;
     }
 
@@ -49,7 +59,7 @@ function Product() {
     doc.setLineWidth(2);
     doc.rect(margin, margin, pageWidth - margin * 2, pageHeight - margin * 2);
 
-    //  Header background
+    // Header 
     doc.setFillColor(20, 83, 45);
     doc.rect(margin + 2, margin + 2, pageWidth - margin * 2 - 4, 30, "F");
 
@@ -58,7 +68,7 @@ function Product() {
      doc.addImage(logoBase64, "PNG", margin + 5, margin + 5, 20, 20);
 
 
-    // Company Name & Subtitle
+    // Company Name 
     doc.setFontSize(18);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, "bold");
@@ -67,7 +77,7 @@ function Product() {
     doc.setFont(undefined, "normal");
     doc.text("Product Inventory Management", margin + 30, margin + 22);
 
-    //  Date
+    // Date
     doc.setFontSize(8);
     doc.text(
       `Generated: ${new Date().toLocaleString()}`,
@@ -75,18 +85,18 @@ function Product() {
       margin + 15
     );
 
-    // ✅ Title
+    // Title
     doc.setTextColor(20, 83, 45);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
     doc.text("Product Inventory Report", margin + 5, margin + 45);
 
-    // ✅ Line under title
+    // Line under title
     doc.setDrawColor(20, 83, 45);
     doc.setLineWidth(1);
     doc.line(margin + 5, margin + 48, pageWidth - margin - 5, margin + 48);
 
-    // ✅ Table columns and data
+    // Table columns and data
     const columns = [
       "Product ID",
       "Product Name",
@@ -95,7 +105,7 @@ function Product() {
       "Status",
     ];
 
-    const rows = products.map((p) => [
+    const rows = filteredProducts.map((p) => [
       p.ProductId,
       p.ProductName,
       p.MushroomType,
@@ -103,7 +113,7 @@ function Product() {
       p.Status,
     ]);
 
-    // ✅ Generate table
+    // Generate table
     autoTable(doc, {
       startY: margin + 60,
       head: [columns],
@@ -123,24 +133,24 @@ function Product() {
       },
     });
 
-    // ✅ Save the PDF
+    // Save the PDF
     doc.save(`EcoFungi_Products_Report_${new Date().toISOString().split("T")[0]}.pdf`);
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* 📌 Sidebar */}
+      {/* Sidebar */}
       <div className="w-64 h-screen bg-white shadow-md sticky top-0">
         <Navbar />
       </div>
 
-      {/* 📄 Main Content */}
+      {/* Main Content */}
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-green-800">Product Details</h2>
 
           <div className="flex gap-3">
-            {/* 🔍 Search bar */}
+            {/* Search bar */}
             <div className="relative w-72">
               <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -152,14 +162,14 @@ function Product() {
               />
             </div>
 
-            {/* ➕ Add button */}
+            {/* Add button */}
             <Link to="/AddProduct">
               <button className="px-4 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition">
                 + Add Product
               </button>
             </Link>
 
-            {/* 📄 PDF Report */}
+            {/* PDF Report */}
             <button
               onClick={generatePDF}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition flex items-center gap-2"
@@ -169,7 +179,7 @@ function Product() {
           </div>
         </div>
 
-        {/* 📊 Product Table */}
+        {/* Product Table */}
         <div className="overflow-x-auto">
           <table className="w-full border border-gray-200 shadow-md rounded-lg bg-white">
             <thead className="bg-green-700 text-white">
@@ -183,20 +193,14 @@ function Product() {
               </tr>
             </thead>
             <tbody>
-              {products && products.length > 0 ? (
-                products
-                  .filter(
-                    (p) =>
-                      p.ProductName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      p.MushroomType?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((product) => (
-                    <ProductD
-                      key={product.ProductId}
-                      Product={product}
-                      onDelete={handleDelete}
-                    />
-                  ))
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <ProductD
+                    key={product.ProductId}
+                    Product={product}
+                    onDelete={handleDelete}
+                  />
+                ))
               ) : (
                 <tr>
                   <td colSpan="6" className="py-6 text-center text-gray-500 italic">

@@ -349,8 +349,10 @@ export default function SalesDash() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <p className="text-sm text-gray-600 font-medium mb-2">Total Revenue</p>
-              <p className="text-3xl font-bold text-green-700">Rs {totalRevenue.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-green-700"> Rs {totalRevenue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+              </p>
             </div>
+
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <p className="text-sm text-gray-600 font-medium mb-2">Total Sales Records</p>
               <p className="text-3xl font-bold text-green-700">{totalSalesCount}</p>
