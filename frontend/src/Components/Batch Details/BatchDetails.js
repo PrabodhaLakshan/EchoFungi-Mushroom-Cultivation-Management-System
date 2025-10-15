@@ -302,12 +302,10 @@ function BatchDetails() {
                     className="p-5 border rounded-lg shadow-sm bg-gray-50 hover:shadow-md transition flex flex-col justify-between"
                   >
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-700 mb-2">
-                        Batch #{i + 1}
-                      </h2>
+                      
                       <p>
                         <span className="font-medium">Batch ID:</span>{" "}
-                        {batch._id}
+                        {batch.batchid}
                       </p>
                       <p>
                         <span className="font-medium">Create Date:</span>{" "}

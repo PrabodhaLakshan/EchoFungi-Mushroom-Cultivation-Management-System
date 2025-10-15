@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import BatchNav from "../BatchNav/BatchNav";
-import Header from "../Header/Header"; // ✅ Import header
+import Header from "../Header/Header"; 
 import axios from "axios";
 import {
   BarChart,
@@ -69,17 +69,17 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* ✅ Sidebar fixed on left */}
+      {/*  Sidebar fixed on left */}
       <div className="fixed top-0 left-0 w-64 h-full bg-white shadow-md z-40">
         <BatchNav />
       </div>
 
-      {/* ✅ Header fixed on top, only over main content */}
+      {/*  Header fixed on top, only over main content */}
       <div className="fixed top-0 left-64 right-0 z-50">
         <Header />
       </div>
 
-      {/* ✅ Main Content */}
+      {/*  Main Content */}
       <div className="ml-64 pt-20 p-6 flex flex-col items-center">
         <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
           Batch Details (Bar Graph)
