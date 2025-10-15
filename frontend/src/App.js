@@ -16,6 +16,8 @@ import EnvironmentHistory from './Components/EnvironmentHistory/EnvironmentH';
 import UpdateSchedule from './Components/Manual Control/UpdateSchedule';
 import ProfilePage from './Components/Profile/ProfilePage';
 import Home from './Components/Home/Home';
+import About from './Components/About/About';
+import Contact from './Components/Contact/Contact';
 import Waiting from './Components/waiting/waiting';
 
 
@@ -105,6 +107,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Navigate to="/" />} /> 
         <Route path="/register" element={<Register />} />
         <Route path="/waiting" element={<Waiting/>} />

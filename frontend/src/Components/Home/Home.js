@@ -71,7 +71,7 @@ const EchoFungiHomepage = () => {
         {['Home', 'About', 'Contact'].map((item) => (
           <a
             key={item}
-            href="#"
+            href={item === 'Home' ? '/' : item === 'About' ? '/about' : item === 'Contact' ? '/contact' : '#'}
             className="text-green-800 hover:text-green-500 transition-colors duration-300 font-medium"
           >
             {item}
@@ -126,7 +126,9 @@ const EchoFungiHomepage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <button 
+               onClick={() => navigate('/login')}
+              className="px-8 py-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
                 Get Started
               </button>
              

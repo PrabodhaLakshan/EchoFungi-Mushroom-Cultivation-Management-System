@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,9 +11,12 @@ function Mcontrol() {
   });
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState("");
+  const [endOptions, setEndOptions] = useState([]);
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+  const schedulesRef = useRef(schedules);
+  const [relayOn, setRelayOn] = useState(null); // track last relay state to avoid duplicate calls
 
   // Fetch schedules
   useEffect(() => {
@@ -33,6 +36,11 @@ function Mcontrol() {
     return () => clearInterval(intervalId);
   }, [token]);
 
+  // keep ref in sync without causing re-renders
+  useEffect(() => {
+    schedulesRef.current = schedules;
+  }, [schedules]);
+
   // Fetch batches
   useEffect(() => {
     const fetchBatches = async () => {
@@ -50,11 +58,63 @@ function Mcontrol() {
   }, [token]);
 
   const handleFormChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    // If start changed, we'll update end options and possibly reset end
+    if (name === 'start') {
+      setFormData({ ...formData, start: value });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
+
+  // Build end time options whenever start changes
+  useEffect(() => {
+    const buildEndOptions = () => {
+      const start = formData.start;
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      // helper to parse HH:MM
+      const parseHM = (s) => {
+        if (!s) return null;
+        const p = s.split(':');
+        if (p.length < 2) return null;
+        const h = parseInt(p[0], 10);
+        const m = parseInt(p[1], 10);
+        if (Number.isNaN(h) || Number.isNaN(m)) return null;
+        return h * 60 + m;
+      };
+
+      const fmt = (mins) => {
+        const h = Math.floor(mins / 60) % 24;
+        const m = mins % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      };
+
+      const options = [];
+      // Determine base start minutes: use parsed start or now if start empty
+      const startMinutes = parseHM(start) ?? nowMinutes;
+      // end limit is start + 5 hours
+      const endLimit = Math.min(startMinutes + 5 * 60, 23 * 60 + 59);
+  // step in minutes (1 min for testing)
+  const step = 1;
+
+      for (let t = startMinutes; t <= endLimit; t += step) {
+        // Do not include past times relative to now
+        if (t < nowMinutes) continue;
+        options.push(fmt(t));
+      }
+
+      setEndOptions(options);
+
+      // If current selected end is not in options, reset it
+      if (formData.end && !options.includes(formData.end)) {
+        setFormData(prev => ({ ...prev, end: '' }));
+      }
+    };
+    buildEndOptions();
+    // Recompute when start or schedules change; schedules may not affect but keep stable
+  }, [formData.start]);
 
   const handleAddSchedule = async () => {
     if (!selectedBatch) {
@@ -131,25 +191,25 @@ function Mcontrol() {
   const controlRelay = async (isOn) => {
     if (isOn) {
       try {
-        await axios.get(`http://localhost:5000/iot/sprayOn`, {
+        const res1 = await axios.get(`http://localhost:5000/iot/sprayOn`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        await axios.get(`http://localhost:5000/iot/buzzerOn`, {
+        const res2 = await axios.get(`http://localhost:5000/iot/buzzerOn`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        alert("Water pump is ON!");  
+        console.log("Water pump is ON", { sprayOn: res1.status, buzzerOn: res2.status });
       } catch (error) {
         console.error('Error controlling relay:', error);
       }
     } else {
       try {
-        await axios.get(`http://localhost:5000/iot/sprayOff`, {
+        const res1 = await axios.get(`http://localhost:5000/iot/sprayOff`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        await axios.get(`http://localhost:5000/iot/buzzerOff`, {
+        const res2 = await axios.get(`http://localhost:5000/iot/buzzerOff`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        alert("Water pump is OFF!");  
+        console.log("Water pump is OFF", { sprayOff: res1.status, buzzerOff: res2.status });
       } catch (error) {
         console.error('Error controlling relay:', error);
       }
@@ -157,31 +217,101 @@ function Mcontrol() {
   };
 
   useEffect(() => {
-    const checkSchedules = () => {
+    const checkSchedules = async () => {
       const currentTime = new Date();
       const currentDay = currentTime.toLocaleString('en-us', { weekday: 'long' }).toLowerCase();
       const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
       let shouldTurnOn = false;
-      schedules.forEach(schedule => {
-        const scheduleDay = (schedule.day || '').toLowerCase();
-        if (scheduleDay === currentDay || scheduleDay === 'every day') {
-          // Convert schedule times to minutes
-          const startParts = (schedule.stime || '00:00').split(':');
-          const endParts = (schedule.endtime || '00:00').split(':');
-          const startMinutes = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
-          const endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1], 10);
-          if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-            shouldTurnOn = true;
+      const list = Array.isArray(schedulesRef.current) ? schedulesRef.current : [];
+      list.forEach(schedule => {
+        // Normalize day string (trim, lowercase)
+        const rawDay = (schedule.day || '').toString().trim();
+        const scheduleDay = rawDay.toLowerCase();
+
+        // Accept both 'every' or 'Every Day' variations
+        const isEvery = scheduleDay === 'every' || scheduleDay === 'every day' || scheduleDay === 'everyday';
+
+        if (isEvery || scheduleDay === currentDay) {
+          // Parse times safely. Support formats: 'HH:MM', 'H:MM', and 'h:mm AM/PM'
+          const parseTime = (t) => {
+            if (!t) return null;
+            const s = t.toString().trim();
+            // If basic HH:MM (24h)
+            const hhmm = s.match(/^(\d{1,2}):(\d{2})$/);
+            if (hhmm) {
+              const h = parseInt(hhmm[1], 10);
+              const m = parseInt(hhmm[2], 10);
+              if (!Number.isNaN(h) && !Number.isNaN(m)) return h * 60 + m;
+            }
+            // Try to parse AM/PM like '4:26 PM' or '4:26pm' or '4.26 p.m.'
+            const ampm = s.match(/(\d{1,2})[:.](\d{2})\s*([ap]m|a\.m\.|p\.m\.|am|pm)?/i);
+            if (ampm) {
+              let h = parseInt(ampm[1], 10);
+              const m = parseInt(ampm[2], 10);
+              const ampmPart = (ampm[3] || '').toLowerCase();
+              if (ampmPart.includes('p') && h < 12) h += 12;
+              if (ampmPart.includes('a') && h === 12) h = 0;
+              if (!Number.isNaN(h) && !Number.isNaN(m)) return h * 60 + m;
+            }
+            // Fallback: try Date parse
+            const d = new Date(`1970-01-01T${s}`);
+            if (!Number.isNaN(d.getTime())) return d.getHours() * 60 + d.getMinutes();
+            return null;
+          };
+
+          const startMinutes = parseTime(schedule.stime);
+          const endMinutes = parseTime(schedule.endtime);
+          if (startMinutes === null || endMinutes === null) {
+            console.debug('Skipping schedule due to unparsable time', { schedule });
+            return; // continue to next schedule
           }
+
+          // Handle schedules that cross midnight (end <= start): treat as two ranges
+          if (endMinutes > startMinutes) {
+            if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+              shouldTurnOn = true;
+            }
+          } else if (endMinutes < startMinutes) {
+            // overnight schedule: start 23:00 end 01:00 -> on if >= start OR < end
+            if (currentMinutes >= startMinutes || currentMinutes < endMinutes) {
+              shouldTurnOn = true;
+            }
+          } else {
+            // start == end -> treat as no-op
+          }
+          console.debug('Checked schedule', { scheduleDay, startMinutes, endMinutes, currentMinutes, shouldTurnOn });
         }
       });
-      controlRelay(shouldTurnOn);
+
+      // If we don't know prior relay state (null), only send ON command but avoid sending initial OFF
+      try {
+        if (relayOn === null) {
+          if (shouldTurnOn) {
+            await controlRelay(true);
+            setRelayOn(true);
+          } else {
+            // don't send OFF on initial load to avoid unnecessary state change
+            console.log('Initial relay state unknown; skipping automatic OFF');
+          }
+        } else if (shouldTurnOn !== relayOn) {
+          await controlRelay(shouldTurnOn);
+          setRelayOn(shouldTurnOn);
+        }
+      } catch (err) {
+        console.error('Failed to change relay state:', err);
+      }
     };
 
-    const intervalId = setInterval(checkSchedules, 60000);  // Check every minute
+    // run immediately then every 15 seconds (reduce chance of missing short schedules)
+    checkSchedules();
+    console.debug('Schedule checker started, running every 15s');
+    const intervalId = setInterval(() => {
+      console.debug('Schedule checker tick');
+      checkSchedules();
+    }, 15000);  // Check every 15 seconds
     return () => clearInterval(intervalId);
-  }, [schedules]);
+  }, []); // run once; schedulesRef keeps list up-to-date
 
   return (
     <div>
@@ -189,7 +319,7 @@ function Mcontrol() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
           <span className="text-blue-600">💦</span>
-          Add Water Spray Schedule
+          Batch Water Spray Schedule
         </h2>
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -244,14 +374,17 @@ function Mcontrol() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-              <input 
-                type="time" 
-                name="end" 
+              <select
+                name="end"
                 value={formData.end}
                 onChange={handleFormChange}
-                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm" 
-                min={formData.start || "00:00"}   // ✅ only allow times >= start
-              />
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
+              >
+                <option value="">-- Select End Time --</option>
+                {endOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
             </div>
           </div>
           
