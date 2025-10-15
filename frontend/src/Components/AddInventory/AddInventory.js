@@ -48,9 +48,15 @@ function AddInventory() {
         break;
 
       case "Item_name":
-        if (!value?.trim()) error = "Item name is required.";
-        else if (value.length < 2) error = "Item name must be at least 2 characters.";
-        break;
+    if (!value?.trim()) {
+        error = "Item name is required.";
+    } else if (value.length < 2) {
+        error = "Item name must be at least 2 characters.";
+    } else if (/\d/.test(value)) {  // Check if value contains any number
+        error = "Item name cannot contain numbers.";
+    }
+    break;
+
 
       case "Quantity":
         if (value === "") error = "Quantity is required.";

@@ -45,9 +45,15 @@ function UpdateInventory() {
         if (!value) error = "Category is required.";
         break;
       case "Item_name":
-        if (!value?.trim()) error = "Item name is required.";
-        else if (value.length < 2) error = "Item name must be at least 2 characters.";
-        break;
+    if (!value?.trim()) {
+        error = "Item name is required.";
+    } else if (value.length < 2) {
+        error = "Item name must be at least 2 characters.";
+    } else if (/\d/.test(value)) {  // Check if value contains any number
+        error = "Item name cannot contain numbers.";
+    }
+    break;
+
       case "Quantity":
         if (value === "" || value === undefined) error = "Quantity is required.";
         else if (Number(value) < 0) error = "Quantity cannot be negative.";

@@ -58,9 +58,15 @@ function UpdatePurchase() {
         if (!value) error = "Supplier is required.";
         break;
       case "Item_name":
-        if (!value?.trim()) error = "Item name is required.";
-        else if (value.length < 2) error = "Item name must be at least 2 characters.";
-        break;
+    if (!value?.trim()) {
+        error = "Item name is required.";
+    } else if (value.length < 2) {
+        error = "Item name must be at least 2 characters.";
+    } else if (/\d/.test(value)) {  // Check if value contains any number
+        error = "Item name cannot contain numbers.";
+    }
+    break;
+
       case "Purchase_date":
         if (!value) error = "Purchase date is required.";
         else if (new Date(value) > new Date()) error = "Purchase date cannot be in the future.";
