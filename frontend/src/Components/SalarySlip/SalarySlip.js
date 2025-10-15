@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import logo from "../../assets/logo.png";
 
 function SalarySlip() {
   const { id } = useParams();
@@ -16,7 +17,7 @@ function SalarySlip() {
       .catch((err) => console.error("Error fetching salary slip:", err));
   }, [id]);
 
-  // 🔹 Download PDF function
+  // 🔹 Download PDF
   const handleDownloadPDF = async () => {
     const element = slipRef.current;
     const canvas = await html2canvas(element, { scale: 2 });
@@ -54,14 +55,27 @@ function SalarySlip() {
       </div>
 
       {/* Salary Slip */}
-      <div ref={slipRef} className="bg-white shadow-xl rounded-lg w-full max-w-4xl border border-gray-300">
+      <div
+        ref={slipRef}
+        className="bg-white shadow-xl rounded-lg w-full max-w-4xl border border-gray-300"
+      >
         {/* Header */}
         <div className="bg-green-700 text-white p-6 rounded-t-lg flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">EcoFungi Pvt Ltd</h1>
-            <p className="text-sm">Habaraduwa, Galle</p>
-            <p className="text-sm">Tel: +94 77 974 5000</p>
+          {/* Left side: logo + company info */}
+          <div className="flex items-center">
+            <img
+              src={logo}
+              alt="Company Logo"
+              className="w-16 h-16 rounded-full border-2 border-white mr-3"
+            />
+            <div>
+              <h1 className="text-2xl font-bold">EcoFungi Pvt Ltd</h1>
+              <p className="text-sm">Habaraduwa, Galle</p>
+              <p className="text-sm">Tel: +94 77 974 5000</p>
+            </div>
           </div>
+
+          {/* Right side: title + date */}
           <div className="text-right">
             <h2 className="text-xl font-semibold">Salary Slip</h2>
             <p>

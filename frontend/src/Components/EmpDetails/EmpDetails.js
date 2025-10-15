@@ -30,7 +30,7 @@ function EmpDetails() {
 
         {/* Topic: Details for November */}
         <h2 className="text-xl font-semibold text-blue-700 mb-4">
-          📅 Details for November
+          📅 Details for September
         </h2>
 
         <div className="overflow-x-auto shadow-md rounded-lg bg-white">
