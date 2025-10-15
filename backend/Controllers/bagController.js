@@ -38,15 +38,16 @@ const getBag = async (req, res) => {
 // Update Bag items
 const updateBag = async (req, res) => {
   try {
-    const { items } = req.body;
+    const { id } = req.params;
+    const { items, bagName } = req.body;
 
-    const bag = await Bag.findOneAndUpdate(
-      {},
-      { $set: { items } }, // replace items array
+    const bag = await Bag.findByIdAndUpdate(
+      id,
+      { $set: { items, bagName } }, // update items array and bag name
       { new: true }
     );
 
-    if (!bag) return res.status(404).json({ message: "No bag found" });
+    if (!bag) return res.status(404).json({ message: "Bag not found" });
 
     res.json(bag);
   } catch (err) {
@@ -57,8 +58,12 @@ const updateBag = async (req, res) => {
 // Delete Bag
 const deleteBag = async (req, res) => {
   try {
-    await Bag.deleteOne({});
-    res.json({ message: "Bag deleted" });
+    const { id } = req.params;
+    const deletedBag = await Bag.findByIdAndDelete(id);
+    if (!deletedBag) {
+      return res.status(404).json({ message: "Bag not found" });
+    }
+    res.json({ message: "Bag deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -79,7 +79,7 @@ app.use("/salaries", sryrouter);
 app.use("/items",inventoryrouter);
 app.use("/suppliers",supplierRouter);
 app.use("/purchases",PurchaseRouter);
-app.use("/bag",BagRouter);
+app.use("/bags",BagRouter);
 app.use("/batches",batchrouter);
 app.use("/profits",ProfitRouter);
 

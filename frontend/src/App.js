@@ -71,6 +71,7 @@ import AddBatch from "./Components/AddBatch/AddBatch"
 import BatchDetails from "./Components/Batch Details/BatchDetails";
 import UpdateBatch from "./Components/UpdateBatch/UpdateBatch";
 import Addbag from "./Components/Add Bag/BagManager";
+import UpdateBag from "./Components/UpdateBag/UpdateBag";
 import SendPdf from "./Components/SendPdf/SendPdf";
 
 //Sales
@@ -167,6 +168,7 @@ function App() {
          
           <Route path="/updatebatch/:id" element={<UpdateBatch />}/>
           <Route path="/addbag" element={<Addbag />}/>
+          <Route path="/update-bag/:id" element={<UpdateBag />}/>
 
 
           <Route path="/sales_manager-dashboard" element={<SalesDash />}/>

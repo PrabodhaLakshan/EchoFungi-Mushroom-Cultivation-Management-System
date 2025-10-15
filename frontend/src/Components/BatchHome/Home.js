@@ -46,7 +46,7 @@ const Home = () => {
   }, []);
 
   const formatXAxis = (tick) => {
-    return tick.slice(-5); // show last 5 characters of _id for readability
+    return `Batch ${tick}`; // show user-friendly batch ID format
   };
 
   const customTooltip = ({ active, payload }) => {
@@ -54,7 +54,7 @@ const Home = () => {
       const batch = payload[0].payload;
       return (
         <div className="bg-white border shadow-md p-3 rounded-lg">
-          <p className="font-bold text-gray-700">Batch ID: {batch._id}</p>
+          <p className="font-bold text-gray-700">Batch ID: {batch.batchid}</p>
           <p>Create Date: {new Date(batch.createDate).toLocaleDateString()}</p>
           <p>Expire Date: {new Date(batch.expireDate).toLocaleDateString()}</p>
           <p>Status: {batch.status}</p>
@@ -81,28 +81,94 @@ const Home = () => {
 
       {/*  Main Content */}
       <div className="ml-64 pt-20 p-6 flex flex-col items-center">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
-          Batch Details (Bar Graph)
-        </h1>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2 text-gray-800">
+            Batch Analytics Dashboard
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Visual overview of batch quantities, removals, and remaining stock
+          </p>
+        </div>
 
         {loading ? (
-          <p>Loading batch data...</p>
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-lg text-gray-600">Loading batch data...</span>
+          </div>
         ) : batches.length === 0 ? (
-          <p>No batch data available.</p>
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-6xl mb-4">📊</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Batch Data Available</h3>
+            <p className="text-gray-500">Start by creating your first batch to see analytics here.</p>
+          </div>
         ) : (
-          <div className="w-full max-w-6xl h-[500px] bg-white shadow-lg rounded-lg p-6">
+          <>
+            <div className="w-full max-w-7xl">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total Batches</p>
+                    <p className="text-2xl font-bold text-gray-900">{batches.length}</p>
+                  </div>
+                  <div className="text-blue-500 text-2xl">📦</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total Quantity</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {batches.reduce((sum, batch) => sum + (batch.quantity || 0), 0)}
+                    </p>
+                  </div>
+                  <div className="text-green-500 text-2xl">📈</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total Removed</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {batches.reduce((sum, batch) => sum + (batch.removedQuantity || 0), 0)}
+                    </p>
+                  </div>
+                  <div className="text-red-500 text-2xl">📉</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600">Available Stock</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {batches.reduce((sum, batch) => sum + (batch.remainingQuantity || 0), 0)}
+                    </p>
+                  </div>
+                  <div className="text-purple-500 text-2xl">✅</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Chart Container */}
+            <div className="bg-white shadow-lg rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Batch Quantity Overview</h2>
+              <div className="h-[500px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={batches}
-                margin={{ top: 30, right: 30, left: 20, bottom: 50 }}
-                barGap={8}
+                margin={{ top: 30, right: 30, left: 60, bottom: 80 }}
+                barGap={4}
+                barCategoryGap={20}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis
-                  dataKey="_id"
+                  dataKey="batchid"
                   tickFormatter={formatXAxis}
-                  angle={-30}
+                  angle={-45}
                   textAnchor="end"
+                  height={80}
+                  interval={0}
                 >
                   <Label
                     value="Batch ID"
@@ -117,25 +183,34 @@ const Home = () => {
                 <Legend verticalAlign="top" height={36} />
                 <Bar
                   dataKey="quantity"
-                  fill="#1d4ed8"
-                  radius={[5, 5, 0, 0]}
-                  name="Quantity"
+                  fill="#3b82f6"
+                  radius={[4, 4, 0, 0]}
+                  name="Total Quantity"
+                  stroke="#1d4ed8"
+                  strokeWidth={1}
                 />
                 <Bar
                   dataKey="removedQuantity"
-                  fill="#dc2626"
-                  radius={[5, 5, 0, 0]}
-                  name="Removed"
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                  name="Removed Quantity"
+                  stroke="#dc2626"
+                  strokeWidth={1}
                 />
                 <Bar
                   dataKey="remainingQuantity"
-                  fill="#16a34a"
-                  radius={[5, 5, 0, 0]}
-                  name="Remaining"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                  name="Available Stock"
+                  stroke="#059669"
+                  strokeWidth={1}
                 />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
+              </ResponsiveContainer>
+              </div>
+            </div>
+            </div>
+          </>
         )}
       </div>
     </div>

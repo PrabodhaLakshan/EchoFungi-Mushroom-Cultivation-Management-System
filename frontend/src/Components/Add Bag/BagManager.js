@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import BatchNav from "../BatchNav/BatchNav";
+import Header from "../Header/Header";
 import { Link, useNavigate } from "react-router-dom";
 
 function BagForm() {
@@ -14,9 +15,7 @@ function BagForm() {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/items", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await axios.get("http://localhost:5000/items");
         if (res.data && Array.isArray(res.data.items)) {
           setInventory(res.data.items);
         } else {
@@ -30,9 +29,7 @@ function BagForm() {
 
     const fetchBags = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/bags", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await axios.get("http://localhost:5000/bags");
         if (Array.isArray(res.data)) {
           setBags(res.data);
         } else {
@@ -70,17 +67,13 @@ function BagForm() {
     e.preventDefault();
     try {
       const payload = { bagName, items };
-      await axios.post("http://localhost:5000/bag", payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await axios.post("http://localhost:5000/bags", payload);
       alert("Bag saved successfully!");
       setBagName("");
       setItems([{ inventoryId: "", quantity: "" }]);
 
       // Refresh bag list
-      const res = await axios.get("http://localhost:5000/bags", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const res = await axios.get("http://localhost:5000/bags");
       setBags(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error saving bag:", err);
@@ -92,9 +85,7 @@ function BagForm() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this bag?")) return;
     try {
-      await axios.delete(`http://localhost:5000/bag/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await axios.delete(`http://localhost:5000/bags/${id}`);
       setBags(bags.filter((bag) => bag._id !== id));
     } catch (err) {
       console.error("Error deleting bag:", err);
@@ -103,10 +94,21 @@ function BagForm() {
   };
 
   return (
-    <div>
-      {/* Form Section */}
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-10">
+    <div className="min-h-screen bg-gray-100">
+      {/* Sidebar fixed on left */}
+      <div className="fixed top-0 left-0 w-64 h-full bg-white shadow-md z-40">
         <BatchNav />
+      </div>
+
+      {/* Header fixed on top, only over main content */}
+      <div className="fixed top-0 left-64 right-0 z-50">
+        <Header />
+      </div>
+
+      {/* Main Content */}
+      <div className="ml-64 pt-20 p-6">
+        {/* Form Section */}
+        <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold mb-6">Create Mushroom Bag</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Bag Name */}
@@ -187,10 +189,10 @@ function BagForm() {
             Save Bag
           </button>
         </form>
-      </div>
+        </div>
 
-      {/* Bag List Section */}
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-4">
+        {/* Bag List Section */}
+        <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-4">
         <h3 className="text-xl font-bold mb-4">Available Bags</h3>
         <table className="min-w-full border border-gray-300 rounded-lg shadow-md">
           <thead className="bg-blue-500 text-white">
@@ -207,7 +209,7 @@ function BagForm() {
                   <td className="px-4 py-2 border">
                     <Link
                       to={`/update-bag/${bag._id}`}
-                      className="text-blue-600 underline"
+                      className="text-blue-600 underline hover:text-blue-800 font-medium"
                     >
                       {bag.bagName}
                     </Link>
@@ -218,13 +220,13 @@ function BagForm() {
                   <td className="px-4 py-2 border flex gap-2 justify-center">
                     <button
                       onClick={() => navigate(`/update-bag/${bag._id}`)}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                      className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
                     >
                       Update
                     </button>
                     <button
                       onClick={() => handleDelete(bag._id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
                     >
                       Delete
                     </button>
@@ -240,6 +242,7 @@ function BagForm() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BatchNav from "../BatchNav/BatchNav";
+import Header from "../Header/Header";
 
 function AddBatch() {
   const history = useNavigate();
@@ -83,12 +84,19 @@ function AddBatch() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
-      {/* Left Sidebar */}
-      <BatchNav />
+    <div className="min-h-screen bg-gray-100">
+      {/* Sidebar fixed on left */}
+      <div className="fixed top-0 left-0 w-64 h-full bg-white shadow-md z-40">
+        <BatchNav />
+      </div>
 
-      {/* Page Content */}
-      <div className="flex-1 ml-64 flex items-center justify-center p-8">
+      {/* Header fixed on top, only over main content */}
+      <div className="fixed top-0 left-64 right-0 z-50">
+        <Header />
+      </div>
+
+      {/* Main Content */}
+      <div className="ml-64 pt-20 flex items-center justify-center p-8">
         <div className="w-full max-w-lg">
           <h1 className="text-2xl font-bold mb-6 text-center">Add Batch</h1>
           <form

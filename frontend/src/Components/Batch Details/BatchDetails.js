@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import BatchNav from "../BatchNav/BatchNav";
+import Header from "../Header/Header";
 
 const URL = "http://localhost:5000/batches";
 
@@ -37,9 +38,7 @@ function BatchDetails() {
   const handleSearch = () => {
     fetchHandler().then((data) => {
       const filteredBatches = data.batches.filter((batch) =>
-        Object.values(batch).some((field) =>
-          field?.toString().toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        batch.batchid?.toString().toLowerCase() === searchQuery.toLowerCase()
       );
       setBatches(filteredBatches);
       setNoResult(filteredBatches.length === 0);
@@ -150,7 +149,7 @@ function BatchDetails() {
     const tableColumn = ["#", "Batch ID", "Created", "Expires", "Status", "Quantity", "Removed", "Available"];
     const tableRows = batches.map((batch, i) => [
       i + 1,
-      batch._id.slice(-8),
+      batch.batchid.toString(),
       batch.createDate ? new Date(batch.createDate).toLocaleDateString() : "N/A",
       batch.expireDate ? new Date(batch.expireDate).toLocaleDateString() : "N/A",
       batch.status ?? "N/A",
@@ -260,10 +259,20 @@ function BatchDetails() {
   };
 
   return (
-    <div className="ml-64 flex justify-center items-start min-h-screen bg-gray-100 p-6">
-      <div className="w-full max-w-6xl bg-white shadow-lg rounded-xl p-6">
-        {/* Sidebar */}
+    <div className="min-h-screen bg-gray-100">
+      {/* Sidebar fixed on left */}
+      <div className="fixed top-0 left-0 w-64 h-full bg-white shadow-md z-40">
         <BatchNav />
+      </div>
+
+      {/* Header fixed on top, only over main content */}
+      <div className="fixed top-0 left-64 right-0 z-50">
+        <Header />
+      </div>
+
+      {/* Main Content */}
+      <div className="ml-64 pt-20 flex justify-center items-start p-6">
+        <div className="w-full max-w-6xl bg-white shadow-lg rounded-xl p-6">
 
         {/* Report Content (Printable Section) */}
         <div ref={componentRef}>
@@ -377,6 +386,7 @@ function BatchDetails() {
           >
             Send WhatsApp Message
           </button>
+        </div>
         </div>
       </div>
     </div>
