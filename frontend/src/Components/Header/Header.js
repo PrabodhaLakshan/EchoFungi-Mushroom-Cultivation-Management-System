@@ -1,28 +1,51 @@
-import React from 'react';
-import './Header.css';  // import the CSS file
-import {Link} from "react-router-dom";
+import React from "react";
+import { UserCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import Logo from "../../assets/logo.png"; 
+
 const Header = () => {
+  const storedUser = JSON.parse(sessionStorage.getItem("user")) || {};
+  const username = storedUser.name || "Manager";
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/");
+  };
+
   return (
-    <header className="header">
-      <div className="header-container">
-        {/* Logo / Title */}
-        <div className="logo">
-          <span>🍄 Mushroom Plantation</span>
+    <header className="backdrop-blur-md bg-green-200/60 shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        {/* Left side empty */}
+       {/* 🍄 Logo */}
+        <div className="flex items-center gap-2">
+            <img src={Logo} alt="Logo" className="h-10 w-10 object-contain" />
+          <span className="text-xl font-bold text-green-900">  EchoFungi  Mushroom Cultivation Management</span>
         </div>
 
-        {/* Navigation */}
-        <nav className="nav">
-        <Link to="/dashbord"> <h1>Home</h1> </Link> 
-        <Link to="/Environment"> <h1>Environment management</h1> </Link> 
-        <Link to="/test"> <h1>batch management</h1></Link> 
-        <Link to="/AddUsers"> <h1>Users</h1></Link> 
-        <Link to="/Storetemp"> <h1>temp</h1></Link>
-        <Link to="/relay"> <h1>relay</h1></Link> 
-        </nav>
+        {/* Right side: profile & logout */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <UserCircle2 className="h-10 w-10 text-green-800" />
+            <span className="text-green-900 font-semibold">
+              Welcome{" "}
+              <button
+                onClick={() => navigate("/profile")}
+                className="underline hover:text-green-700"
+              >
+                {username}
+              </button>
+            </span>
+          </div>
 
-        {/* Profile Icon */}
-        <div className="profile-icon">
-          U
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </header>
